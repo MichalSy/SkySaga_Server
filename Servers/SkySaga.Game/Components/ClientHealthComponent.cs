@@ -1,12 +1,8 @@
-﻿using System;
-
-using RakNet;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class ClientHealthComponent : HealthComponent
 {
-    public byte DebrisType { get; set { field = value; OnParameterChanged(); } }
+    public byte DebrisType { get; set => SetIfChanged(ref field, value); }
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

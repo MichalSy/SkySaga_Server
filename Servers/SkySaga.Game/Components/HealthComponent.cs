@@ -1,20 +1,14 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Packets.Common;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class HealthComponent : Component
 {
-    public int WholeHearts { get; set { field = value; OnParameterChanged(); } }
-    public int HalfHearts { get; set { field = value; OnParameterChanged(); } }
-    public int InitialHP { get; set { field = value; OnParameterChanged(); } }
-    public bool Immortal { get; set { field = value; OnParameterChanged(); } }
-    public int CorpseStatus { get; set { field = value; OnParameterChanged(); } }
-    public int LastDamageSourceID { get; set { field = value; OnParameterChanged(); } }
-    public ItemSpec LastDamageSourceWeaponItemSpec { get; set { field = value; OnParameterChanged(); } } = new();
+    public int WholeHearts { get; set => SetIfChanged(ref field, value); }
+    public int HalfHearts { get; set => SetIfChanged(ref field, value); }
+    public int InitialHP { get; set => SetIfChanged(ref field, value); }
+    public bool Immortal { get; set => SetIfChanged(ref field, value); }
+    public int CorpseStatus { get; set => SetIfChanged(ref field, value); }
+    public int LastDamageSourceID { get; set => SetIfChanged(ref field, value); }
+    public ItemSpec LastDamageSourceWeaponItemSpec { get; set => SetIfChanged(ref field, value);     } = new();
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

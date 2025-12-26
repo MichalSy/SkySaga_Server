@@ -8,6 +8,8 @@ public static class AuthenticationEndpoints
 
     public record SmilegateAuthLogin(string Token);
 
+    private static int _playerCounter = 0;
+
     public static void MapAuthenticationEndpoints(this WebApplication app)
     {
         app.MapPost("/api/authentication/applications/names/login", (ApplicationLogin login) => new
@@ -25,8 +27,8 @@ public static class AuthenticationEndpoints
             result = new
             {
                 sgUser = "",
-                memberId = "1",
-                username = "EDITz",
+                memberId = _playerCounter.ToString(),
+                username = $"Player_{++_playerCounter}",
                 token = new
                 {
                     tokenId = "tokenId",

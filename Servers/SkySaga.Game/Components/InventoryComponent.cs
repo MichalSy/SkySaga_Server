@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class InventoryComponent : Component
 {
-    public byte MaxInventorySlots { get; set { field = value; OnParameterChanged(); } }
-    public uint? InventoryLoadOut { get; set { field = value; OnParameterChanged(); } }
-    public bool TakeOnly { get; set { field = value; OnParameterChanged(); } }
+    public byte MaxInventorySlots { get; set => SetIfChanged(ref field, value); }
+    public uint? InventoryLoadOut { get; set => SetIfChanged(ref field, value); }
+    public bool TakeOnly { get; set => SetIfChanged(ref field, value); }
 
     private const int InventoryEntityListDefaultCount = 45;
-    public List<int> InventoryEntityList { get; set { field = value; OnParameterChanged(); } } = [];
+    public List<int> InventoryEntityList { get; set => SetIfChanged(ref field, value); } = [];
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

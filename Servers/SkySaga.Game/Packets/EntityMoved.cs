@@ -1,50 +1,49 @@
-﻿using System;
-using System.Numerics;
-using System.Diagnostics;
-
-using RakNet;
-
-using SkySaga.Game.Components;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public static class EntityMoved
 {
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
         if (!bitStream.Read(out int entityId))
             return false;
 
-        var inOutByteArray = new byte[4];
+        if (!ReadPosition(bitStream, out var positionX)) return false;
+        if (!ReadPosition(bitStream, out var positionY)) return false;
+        if (!ReadPosition(bitStream, out var positionZ)) return false;
 
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x10000), true))
-            return false;
+        if (!ReadYaw(bitStream, out var yaw)) return false;
 
-        var positionX = BitConverter.ToInt32(inOutByteArray, 0);
+        //Debug.WriteLine($"entityID: {entityId}, position: (x :{positionX} y: {positionY}, z: {positionZ}), yaw: {yaw}", nameof(EntityMoved));
 
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x10000), true))
-            return false;
 
-        var positionY = BitConverter.ToInt32(inOutByteArray, 0);
-
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x10000), true))
-            return false;
-
-        var positionZ = BitConverter.ToInt32(inOutByteArray, 0);
-
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x6400), true))
-            return false;
-
-        var yaw = BitConverter.ToSingle(inOutByteArray, 0);
-
-        // Debug.WriteLine($"entityID: {entityId}, position: (x :{positionX} y: {positionY}, z: {positionZ}), yaw: {yaw}", nameof(EntityMoved));
-
-        if (entityId == connection.Player.Id)
+        if (connection.PlayerEntity.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
         {
-            if (connection.Player.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([positionX, positionY, positionZ, 0, 0, 0, 0, 0]);
+            smoothedTransformComponent.Position = new Vector3(positionX, positionY, positionZ);
+            //smoothedTransformComponent.Yaw = yaw;
         }
 
+        return true;
+    }
+
+    private static bool ReadPosition(BitStream bitStream, out float position)
+    {
+        if (!bitStream.ReadInt32(0x10000, out var tmpPosition))
+        {
+            position = 0;
+            return false;
+        }
+        position = tmpPosition / 64f;
+        return true;
+    }
+
+    private static bool ReadYaw(BitStream bitStream, out float yaw)
+    {
+        if (!bitStream.ReadInt32(25600, out var tmpYaw))
+        {
+            yaw = 0;
+            return false;
+        }
+        yaw = (tmpYaw - 0x3200) * 0.03125f;
         return true;
     }
 }

@@ -1,16 +1,6 @@
-﻿using System;
-using System.Numerics;
-using System.Diagnostics;
+﻿using RakNet;
+using SkySaga.Game.Managers.Player;
 using System.Collections.Frozen;
-using System.Collections.Generic;
-
-using RakNet;
-
-using SkySaga.Game.World;
-using SkySaga.Game.Packets;
-using SkySaga.Game.Extensions;
-using SkySaga.Game.Interfaces;
-using SkySaga.Game.Components;
 
 namespace SkySaga.Game;
 
@@ -19,107 +9,29 @@ public class Server : IDisposable
     private const int MaxConnections = 100;
 
     private readonly ushort _port;
+    private readonly string _password;
     private readonly RakPeerInterface _peer;
+    private readonly IWorldManager _worldManager;
+    private readonly PlayerInitializer _playerInitializer;
+    private readonly PlayerConnectionManager _playerConnectionManager;
 
-    private readonly Dictionary<int, Map> _maps = new();
-    private readonly Dictionary<ulong, Connection> _connections = new();
+    private readonly Dictionary<ulong, PlayerConnection> _connections = [];
 
-    public Server(string password, ushort port)
+    public Server(IWorldManager worldManager, PlayerInitializer playerInitializer, PlayerConnectionManager playerConnectionManager, string password = "Something about penguins\0", ushort port = 42069)
     {
+        _worldManager = worldManager ?? throw new ArgumentNullException(nameof(worldManager));
+        _playerInitializer = playerInitializer ?? throw new ArgumentNullException(nameof(playerInitializer));
+        _playerConnectionManager = playerConnectionManager ?? throw new ArgumentNullException(nameof(playerConnectionManager));
+        _password = password ?? throw new ArgumentNullException(nameof(password));
         _port = port;
+
         _peer = RakPeerInterface.GetInstance();
 
-        /* Causing Crash !?
+        //var packetLogger = new PacketLogger();
+        //_peer.AttachPlugin(packetLogger);
 
-        #if DEBUG
-                var packetLogger = new PacketLogger();
-                _peer.AttachPlugin(packetLogger);
-        #endif
-
-        */
-
-        _peer.SetIncomingPassword(password, password.Length);
+        _peer.SetIncomingPassword(_password, _password.Length);
         _peer.SetMaximumIncomingConnections(MaxConnections);
-
-        // TODO: Map system that'll load entities and their states
-
-        var map = new Map(new MapDefinition
-        {
-            MapSizeChunks = new Vector<int>(4),
-            BiomeType = Util.ComputeCrc32("Sky_Island"),
-            GameMode = 1
-        });
-
-        if (map.TryCreateEntity("AirShip", out var airShip))
-        {
-            if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
-            {
-                transformComponent.Position = new Vector<int>([2000, 70, 629, 0, 0, 0, 0, 0]);
-            }
-        }
-
-        if (map.TryCreateEntity("TimeOfDay", out var timeOfDay))
-        {
-            if (timeOfDay.TryGetComponent<ClientTimeOfDayComponent>(out var clientTimeOfDayComponent))
-            {
-                clientTimeOfDayComponent.StartTimeOfDay = 65536 * 2;
-                clientTimeOfDayComponent.FixedTimeOfDay = false;
-                clientTimeOfDayComponent.DayNightCycleDuration = 64;
-                clientTimeOfDayComponent.RealWorldStartTime = RakNet.RakNet.GetTime();
-                clientTimeOfDayComponent.TimeStretch = 64;
-                clientTimeOfDayComponent.TimeOfDayOffset = 0;
-            }
-        }
-
-        if (map.TryCreateEntity("Sheep", out var sheep))
-        {
-            if (sheep.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([2000, 70, 629, 0, 0, 0, 0, 0]);
-
-            if (sheep.TryGetComponent<ClientHealthComponent>(out var clientHealthComponent))
-                clientHealthComponent.HalfHearts = 50;
-
-            if (sheep.TryGetComponent<ClientCharacterPhysicsComponent>(out var clientCharacterPhysicsComponent))
-                clientCharacterPhysicsComponent.IsMoveable = true;
-        }
-
-        if (map.TryCreateEntity("Bear", out var bear))
-        {
-            if (bear.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([2200, 70, 629, 0, 0, 0, 0, 0]);
-        }
-
-        if (map.TryCreateEntity("Chicken", out var chicken))
-        {
-            if (chicken.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([2400, 70, 629, 0, 0, 0, 0, 0]);
-        }
-
-        if (map.TryCreateEntity("Goat", out var goat))
-        {
-            if (goat.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([2600, 70, 629, 0, 0, 0, 0, 0]);
-        }
-
-        if (map.TryCreateEntity("Knight", out var knight))
-        {
-            if (knight.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([2800, 70, 629, 0, 0, 0, 0, 0]);
-        }
-
-        if (map.TryCreateEntity("Monkey", out var monkey))
-        {
-            if (monkey.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([3000, 70, 629, 0, 0, 0, 0, 0]);
-        }
-
-        if (map.TryCreateEntity("Tree", out var tree))
-        {
-            if (tree.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector<int>([3000, 70, 1000, 0, 0, 0, 0, 0]);
-        }
-
-        _maps.TryAdd(0, map);
     }
 
     public bool Start()
@@ -151,8 +63,7 @@ public class Server : IDisposable
         if (!_connections.TryGetValue(packet.guid.g, out var connection)
             && messageId == (byte)DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION)
         {
-            // TODO: Decide which map the connection uses
-            connection = new Connection(this, _maps[0], packet.guid);
+            connection = new PlayerConnection(this, packet.guid, _worldManager, _playerInitializer, _playerConnectionManager);
 
             _connections.TryAdd(packet.guid.g, connection);
 
@@ -182,7 +93,13 @@ public class Server : IDisposable
             var handled = connection.ProcessPacket(packetId, bitStream);
 
             if (!handled)
+            {
                 Debug.WriteLine($"Unhandled Packet. ( Length: {packet.length} )", packetId.ToString());
+
+                //if (!bitStream.ReadBits(out int sourceEntityID))
+                //    return false;
+
+            }
         }
 
     Deallocate:
@@ -191,23 +108,20 @@ public class Server : IDisposable
 
     private void ProcessMaps()
     {
-        foreach (var map in _maps.ToFrozenSet())
+        var entities = _worldManager.EntityManager.Entities;
+
+        foreach (var entity in entities)
         {
-            var entities = map.Value.Entities;
+            if (!entity.SyncRequired)
+                continue;
 
-            foreach (var entity in entities)
+            var entitySync = new EntitySync
             {
-                if (!entity.SyncRequired)
-                    continue;
+                Id = entity.Id,
+                SyncData = entity.GetSyncData(newEntity: false)
+            };
 
-                var entitySync = new EntitySync
-                {
-                    Id = entity.Id,
-                    SyncData = entity.GetSyncData(newEntity: false)
-                };
-
-                SendToAll(entitySync);
-            }
+            _playerConnectionManager.BroadcastToAll(entitySync);
         }
     }
 
@@ -224,23 +138,20 @@ public class Server : IDisposable
         _peer.Send(bitStream, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE_ORDERED, (char)0, systemIdentifier, false);
     }
 
-    public void SendToAll(ISerializablePacket packet)
-    {
-        var bitStream = packet.Serialize();
 
-        foreach (var connection in _connections.ToFrozenDictionary())
-            connection.Value.Send(bitStream);
-    }
-
-    private void OnConnectionAdded(Connection connection)
+    private void OnConnectionAdded(PlayerConnection connection)
     {
+        // Register connection with PlayerConnectionManager
+        _playerConnectionManager.AddConnection(connection.Guid.g, connection);
         connection.OnConnected();
     }
 
-    private void OnConnectionRemoved(Connection connection)
+    private void OnConnectionRemoved(PlayerConnection connection)
     {
-        _connections.Remove(connection.Guid.g);
+        // Unregister connection from PlayerConnectionManager
+        _playerConnectionManager.RemoveConnection(connection.Guid.g);
 
+        _connections.Remove(connection.Guid.g);
         connection.OnDisconnected();
     }
 

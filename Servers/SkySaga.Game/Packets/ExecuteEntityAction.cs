@@ -1,9 +1,4 @@
-﻿using System.Diagnostics;
-using System.Collections.Generic;
-
-using RakNet;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public static class ExecuteEntityAction
 {
@@ -30,7 +25,7 @@ public static class ExecuteEntityAction
         { Util.ComputeCrc32("ResourcePickupAction"), "ResourcePickupAction" },
     };
 
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
         if (!bitStream.Read(out int srcEntityID))
             return false;

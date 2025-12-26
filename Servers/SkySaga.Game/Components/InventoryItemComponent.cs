@@ -1,17 +1,11 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Packets.Common;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class InventoryItemComponent : Component
 {
-    public InventorySlotData InventorySlotData { get; set { field = value; OnParameterChanged(); } } = new();
-    public bool ItemLocked { get; set { field = value; OnParameterChanged(); } }
-    public bool AllowAddingToFoundInBiomes { get; set { field = value; OnParameterChanged(); } }
-    public bool HasBeenTransferred { get; set { field = value; OnParameterChanged(); } }
+    public InventorySlotData InventorySlotData { get; set => SetIfChanged(ref field, value); } = new();
+    public bool ItemLocked { get; set => SetIfChanged(ref field, value); }
+    public bool AllowAddingToFoundInBiomes { get; set => SetIfChanged(ref field, value); }
+    public bool HasBeenTransferred { get; set => SetIfChanged(ref field, value); }
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

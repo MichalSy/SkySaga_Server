@@ -6,12 +6,12 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-namespace RakNet {
+namespace RakNet
+{
 
-using System;
-using System.Runtime.InteropServices;
+    using System;
 
-public class RakNet {
+    public class RakNet {
  
 	    public static readonly SystemAddress UNASSIGNED_SYSTEM_ADDRESS = new SystemAddress();
 	    public static readonly RakNetGUID UNASSIGNED_RAKNET_GUID = new RakNetGUID(ulong.MaxValue);

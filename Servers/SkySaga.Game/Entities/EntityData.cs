@@ -1,15 +1,11 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Linq;
 
 namespace SkySaga.Game.Entities;
 
 public class EntityData
 {
-    private Dictionary<(string ComponentName, string ParameterName), int> _syncedParametersByName = new(new EqualityComparer());
-    private Dictionary<int, (string ComponentName, string ParameterName)> _syncedParametersByIndex = [];
+    private readonly Dictionary<(string ComponentName, string ParameterName), int> _syncedParametersByName = new(new EqualityComparer());
+    private readonly Dictionary<int, (string ComponentName, string ParameterName)> _syncedParametersByIndex = [];
 
     private class EqualityComparer : IEqualityComparer<(string ComponentName, string ParameterName)>
     {

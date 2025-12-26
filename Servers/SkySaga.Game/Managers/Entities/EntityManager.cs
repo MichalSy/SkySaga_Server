@@ -1,25 +1,21 @@
-﻿using System;
-using System.IO;
-using System.Text.Json;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+namespace SkySaga.Game.Managers.Entities;
 
-using SkySaga.Game.Entities;
-using SkySaga.Game.Components;
-using SkySaga.Game.Extensions;
-
-namespace SkySaga.Game;
-
-public static class EntityManager
+/// <summary>
+/// Manages entity creation, deletion, and retrieval within the game world.
+/// Includes entity template definitions loaded from Entities.json.
+/// </summary>
+public class EntityManager : IMapEntityManager
 {
-    private static Dictionary<string, Type> _components = new(StringComparer.OrdinalIgnoreCase);
-    private static Dictionary<string, EntityData> _entities = new(StringComparer.OrdinalIgnoreCase);
+    private static int _uniqueEntityId = 1;
+    private readonly Dictionary<int, Entity> _entities = [];
+
+    // Entity template definitions
+    private static readonly Dictionary<string, Type> _components = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, EntityData> _entityTemplates = new(StringComparer.OrdinalIgnoreCase);
 
     static EntityManager()
     {
-        LoadEntityData();
-
+        LoadEntityTemplates();
         LoadAssemblyComponents();
     }
 
@@ -38,13 +34,13 @@ public static class EntityManager
         }
     }
 
-    private static void LoadEntityData()
+    private static void LoadEntityTemplates()
     {
         using var fileStream = File.OpenRead(@"Data\Entities.json");
 
         using var jsonDocument = JsonDocument.Parse(fileStream);
 
-        if (!jsonDocument.RootElement.TryGetPropertyIgnoreCase("Entities", out var entitiesElement) &&
+        if (!jsonDocument.RootElement.TryGetPropertyIgnoreCase(nameof(Entities), out var entitiesElement) &&
             entitiesElement.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException();
 
@@ -131,13 +127,20 @@ public static class EntityManager
                 components.Add(componentInfo);
             }
 
-            _entities.Add(entityName, new EntityData(entityName, parameters, components));
+            _entityTemplates.Add(entityName, new EntityData(entityName, parameters, components));
         }
     }
 
-    public static bool TryCreateEntity(int id, string name, [NotNullWhen(true)] out Entity? entity)
+    public IEnumerable<Entity> Entities => _entities.Values;
+
+    public bool TryGetEntity(int id, [NotNullWhen(true)] out Entity? entity)
     {
-        if (!_entities.TryGetValue(name, out var entityData))
+        return _entities.TryGetValue(id, out entity);
+    }
+
+    public bool TryCreateEntity(int id, string name, [NotNullWhen(true)] out Entity? entity)
+    {
+        if (!_entityTemplates.TryGetValue(name, out var entityData))
         {
             entity = null;
             return false;
@@ -162,6 +165,27 @@ public static class EntityManager
 
         entity = new Entity(id, entityData, components);
 
+        _entities.TryAdd(entity.Id, entity);
         return true;
+    }
+
+    public bool TryCreateEntity(string name, [NotNullWhen(true)] out Entity? entity)
+    {
+        return TryCreateEntity(_uniqueEntityId++, name, out entity);
+    }
+
+    public void RemoveEntity(Entity entity)
+    {
+        _entities.Remove(entity.Id);
+    }
+
+    public void RemoveEntity(int id)
+    {
+        _entities.Remove(id);
+    }
+
+    public void Clear()
+    {
+        _entities.Clear();
     }
 }

@@ -1,11 +1,4 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-using SkySaga.Game.Interfaces;
-
-namespace SkySaga.Game.Packets.Common;
+﻿namespace SkySaga.Game.Packets.Common;
 
 public class InventorySlotData : ISerializableType
 {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace SkySaga.Game;
 
@@ -112,6 +111,6 @@ public static class Util
 
     public static string NewGuid()
     {
-        return Guid.NewGuid().ToString();
+        return Guid.CreateVersion7().ToString();
     }
 }

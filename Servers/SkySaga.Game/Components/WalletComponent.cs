@@ -1,14 +1,8 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Packets.Common;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class WalletComponent : Component
 {
-    public WalletData Currency { get; set { field = value; OnParameterChanged(); } } = new();
+    public WalletData Currency { get; set => SetIfChanged(ref field, value); } = new();
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

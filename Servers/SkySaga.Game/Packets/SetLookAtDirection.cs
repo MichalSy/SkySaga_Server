@@ -1,33 +1,28 @@
-﻿using System;
-using System.Diagnostics;
-
-using RakNet;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public static class SetLookAtDirection
 {
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
-        var inOutByteArray = new byte[4];
 
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(4), true))
+        if (!bitStream.ReadByte(4, out var lookAtMode)) return false;
+
+        if (!Read15BitFloat(bitStream, out var pitch)) return false;
+        if (!Read15BitFloat(bitStream, out var yaw)) return false;
+
+        Debug.WriteLine($"lookAtMode: {lookAtMode}, pitch: {pitch}, yaw: {yaw}", nameof(SetLookAtDirection));
+
+        return true;
+    }
+
+    private static bool Read15BitFloat(BitStream bitStream, out float floatValue)
+    {
+        if (!bitStream.ReadInt32(25600, out var tmpValue))
+        {
+            floatValue = 0;
             return false;
-
-        var lookAtMode = BitConverter.ToInt32(inOutByteArray, 0);
-
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x6400), true))
-            return false;
-
-        var pitch = BitConverter.ToInt32(inOutByteArray, 0);
-
-        if (!bitStream.ReadBits(inOutByteArray, 32 - Util.NumBitsRequiredUInt32(0x6400), true))
-            return false;
-
-        var yaw = BitConverter.ToInt32(inOutByteArray, 0);
-
-        // Debug.WriteLine($"lookAtMode: {lookAtMode}, pitch: {pitch}, yaw: {yaw}", nameof(SetLookAtDirection));
-
+        }
+        floatValue = (tmpValue - 0x3200) * 0.03125f;
         return true;
     }
 }

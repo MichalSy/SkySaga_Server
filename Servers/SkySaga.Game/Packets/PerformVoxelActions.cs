@@ -1,61 +1,143 @@
-using RakNet;
-using SkySaga.Game.Extensions;
-using System;
-using System.Diagnostics;
-
 namespace SkySaga.Game.Packets;
 
 /// <summary>
 /// PerformVoxelActions packet from client to server
 /// Decodes voxel placement/destruction actions with bit-packed coordinates
 ///
-/// Packet Structure (Bit-Packed, 128 bits / 16 bytes):
-/// Offset  0- 15: Header? (16 bits)
-/// Offset  5- 9:  chunkX (5 bits, range 0-31)
-/// Offset  6:     Unknown gap (1 bit)
-/// Offset 11- 15: chunkY (5 bits, range 0-31)
-/// Offset 17- 21: chunkZ (5 bits, range 0-31)
-/// Offset 23- 27: voxelX (5 bits, range 0-31)
-/// Offset 28:     Unknown gap (1 bit)
-/// Offset 29- 33: voxelY (5 bits, range 0-31)
-/// Offset 34:     Unknown gap (1 bit)
-/// Offset 35- 39: voxelZ (5 bits, range 0-31)
-/// Offset 40- 42: side (3 bits, range 0-5, cube face)
-/// Offset 43:     Unknown gap (1 bit)
-/// Offset 44- 48: power (5 bits, stored as value/32 for fixed-point fraction)
-/// NOTE: Direction and Position data are NOT decoded
+/// Packet Structure (Bit-Packed):
+/// Offset   0- 3:   location (4 bits, range 0-15)
+/// Offset   4- 9:   chunkCoordX (6 bits, range 0-63)
+/// Offset  10-15:   chunkCoordY (6 bits, range 0-63)
+/// Offset  16-21:   chunkCoordZ (6 bits, range 0-63)
+/// Offset  22-27:   voxelCoordX (6 bits, range 0-63)
+/// Offset  28-33:   voxelCoordY (6 bits, range 0-63)
+/// Offset  34-39:   voxelCoordZ (6 bits, range 0-63)
+/// Offset  40-42:   side (3 bits, range 0-5, cube face)
+/// Offset  43-48:   power (6 bits, range 0-63)
+/// Offset  49-65:   positionX (17 bits)
+/// Offset  66-82:   positionY (17 bits)
+/// Offset  83-99:   positionZ (17 bits)
+/// Offset 100-107:  directionX (8 bits)
+/// Offset 108-115:  directionY (8 bits)
+/// Offset 116-123:  directionZ (8 bits)
 /// </summary>
 public static class PerformVoxelActions
 {
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
-        // PerformVoxelActions packet is exactly 16 bytes (128 bits)
-        const int packetBytes = 16;
-        var allBytes = new byte[packetBytes];
+        // Location
+        if (!ReadLocation(bitStream, out var location)) return false;
 
-        // Read exactly 16 bytes from the bitstream
-        if (!bitStream.ReadAlignedBytes(allBytes, packetBytes))
+        // ChunkCoords
+        if (!ReadChunkCoordinate(bitStream, out var chunkCoordX)) return false;
+        if (!ReadChunkCoordinate(bitStream, out var chunkCoordY)) return false;
+        if (!ReadChunkCoordinate(bitStream, out var chunkCoordZ)) return false;
+
+        // VoxelCoords
+        if (!ReadVoxelCoordinate(bitStream, out var voxelCoordX)) return false;
+        if (!ReadVoxelCoordinate(bitStream, out var voxelCoordY)) return false;
+        if (!ReadVoxelCoordinate(bitStream, out var voxelCoordZ)) return false;
+
+        // Side
+        if (!ReadSide(bitStream, out var side)) return false;
+
+        // Power
+        if (!ReadPower(bitStream, out var power)) return false;
+
+        // Position
+        if (!ReadPosition(bitStream, out var positionX)) return false;
+        if (!ReadPosition(bitStream, out var positionY)) return false;
+        if (!ReadPosition(bitStream, out var positionZ)) return false;
+
+        // Direction
+        if (!ReadDirection(bitStream, out var directionX)) return false;
+        if (!ReadDirection(bitStream, out var directionY)) return false;
+        if (!ReadDirection(bitStream, out var directionZ)) return false;
+
+        Debug.WriteLine($"location: {location}, chunkCoord: ({chunkCoordX}, {chunkCoordY}, {chunkCoordZ}), voxelCoord: ({voxelCoordX}, {voxelCoordY}, {voxelCoordZ}), side: {side}, power: {power}, position: ({positionX}, {positionY}, {positionZ}), direction: ({directionX}, {directionY}, {directionZ})", nameof(PerformVoxelActions));
+
+        // Get world manager and set voxel
+        var world = connection.WorldManager;
+        var chunkPos = new Vector3Int(chunkCoordX, chunkCoordY, chunkCoordZ);
+        var voxelPos = new Vector3Int(voxelCoordX, voxelCoordY, voxelCoordZ);
+
+        int blockId = 0;
+        if (location == ActionLocation.LeftHand && connection.LeftHandBlockId.HasValue)
+        {
+            voxelPos += new Vector3Int(directionX, directionY, directionZ);
+            blockId = connection.LeftHandBlockId.Value;
+        }
+        if (location == ActionLocation.RightHand && connection.RightHandBlockId.HasValue)
+        {
+            voxelPos += new Vector3Int(directionX, directionY, directionZ);
+            blockId = connection.RightHandBlockId.Value;
+        }
+
+        world.ChunkManager.SetVoxel(chunkPos, voxelPos, (byte)blockId);
+
+        Debug.WriteLine($"Voxel at chunk {chunkPos}, voxel {voxelPos}, blockType {blockId}", nameof(PerformVoxelActions));
+
+        return true;
+    }
+
+    private static bool ReadLocation(BitStream bitStream, out ActionLocation location)
+    {
+        if (!bitStream.ReadByte(8, out var tmpLocation))
+        {
+            location = 0;
             return false;
+        }
+        location = (ActionLocation)tmpLocation;
+        return true;
+    }
 
-        // Extract chunk coordinates (offset 5, 11, 17 with 5 bits each)
-        int chunkX = allBytes.ExtractBits(5, 5);
-        int chunkY = allBytes.ExtractBits(11, 5);
-        int chunkZ = allBytes.ExtractBits(17, 5);
+    private static bool ReadChunkCoordinate(BitStream bitStream, out int coord)
+        => bitStream.ReadInt32(32, out coord);
 
-        // Extract voxel coordinates (offset 23, 29, 35 with 5 bits each)
-        int voxelX = allBytes.ExtractBits(23, 5);
-        int voxelY = allBytes.ExtractBits(29, 5);
-        int voxelZ = allBytes.ExtractBits(35, 5);
+    private static bool ReadVoxelCoordinate(BitStream bitStream, out int coord)
+        => bitStream.ReadInt32(32, out coord);
 
-        // Extract side/face (offset 40 with 3 bits)
-        int side = allBytes.ExtractBits(40, 3);
+    private static bool ReadSide(BitStream bitStream, out BlockSide side)
+    {
+        if (!bitStream.ReadByte(6, out var tmpSide))
+        {
+            side = 0;
+            return false;
+        }
+        side = (BlockSide)tmpSide;
+        return true;
+    }
 
-        // Extract power (offset 44 with 5 bits, stored as value/32)
-        int powerBits = allBytes.ExtractBits(44, 5);
-        float power = powerBits / 32f;
+    private static bool ReadPower(BitStream bitStream, out float power)
+    {
+        if (!bitStream.ReadInt32(32, out var tmpPower))
+        {
+            power = 0;
+            return false;
+        }
+        power = tmpPower / 32f;
+        return true;
+    }
 
-        Debug.WriteLine($"chunkCoords: ({chunkX}, {chunkY}, {chunkZ}), voxelCoords: ({voxelX}, {voxelY}, {voxelZ}), side: {side}, power: {power}", nameof(PerformVoxelActions));
+    private static bool ReadPosition(BitStream bitStream, out float position)
+    {
+        if (!bitStream.ReadInt32(0x10000, out var tmpPosition))
+        {
+            position = 0;
+            return false;
+        }
+        position = tmpPosition / 64f;
+        return true;
+    }
 
+    private static bool ReadDirection(BitStream bitStream, out int direction)
+    {
+        if (!bitStream.ReadInt32(128, out var tmpDirection))
+        {
+            direction = 0;
+            return false;
+        }
+        direction = tmpDirection / 64 - 1;
         return true;
     }
 }

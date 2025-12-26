@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-
-using RakNet;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class FeatureUnlockComponent : Component
 {
     // public object FeatureUnlockRequirementList { get; set { field = value; OnParameterChanged(); } }
-    public List<bool> FeatureIsLockedStatusList { get; set { field = value; OnParameterChanged(); } } = [];
+    public List<bool> FeatureIsLockedStatusList { get; set => SetIfChanged(ref field, value); } = [];
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

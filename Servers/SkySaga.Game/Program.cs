@@ -1,18 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-
-using RakNet;
-
-using SkySaga.Game;
-
-var keepRunning = true;
-
-Console.CancelKeyPress += delegate
-{
-    keepRunning = false;
-};
-
+﻿// Validate RakNet DLL before starting
 if (!File.Exists("RakNet.dll"))
 {
     Console.WriteLine("""
@@ -42,30 +28,36 @@ catch
     return;
 }
 
-ushort port = 42069;
+// Create and configure the host
+var builder = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
+    {
+        // Register managers and services
+        services.AddSingleton<PlayerConnectionManager>();
+        services.AddSingleton<IWorldManager, WorldManager>();
+        services.AddSingleton(sp => new PlayerInitializer(sp.GetRequiredService<IWorldManager>().EntityManager));
 
-using var server = new Server("Something about penguins\0", port);
+        // Register Game Server
+        services.AddSingleton<Server>();
 
-if (!server.Start())
-{
-    Console.WriteLine("""
-        Failed to start server.
-        Press any key to continue . . .
-        """);
+        // Register IRC Server
+        services.AddSingleton<IrcServer>();
 
-    Console.ReadKey();
+        // Register hosted services
+        services.AddHostedService<ServerHostedService>();
+        services.AddHostedService<IrcServerHostedService>();
+    })
+    .ConfigureLogging(logging =>
+    {
+        logging.ClearProviders();
+        logging.AddConsole();
+        logging.SetMinimumLevel(LogLevel.Debug);
+    });
 
-    return;
-}
+var host = builder.Build();
 
-Console.WriteLine($"Server has started on port {port}.");
-
-while (keepRunning)
-{
-    server.Tick();
-
-    Thread.Sleep(30);
-}
+// Run the host
+await host.RunAsync();
 
 Console.WriteLine("""
         Server has stopped.

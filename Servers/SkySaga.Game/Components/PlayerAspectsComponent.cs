@@ -1,23 +1,17 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class PlayerAspectsComponent : Component
 {
-    public bool CanEditMap { get; set { field = value; OnParameterChanged(); } }
-    public bool CanDamageEntities { get; set { field = value; OnParameterChanged(); } }
-    public bool CanDamagePlayers { get; set { field = value; OnParameterChanged(); } }
-    public bool CanCreateDevices { get; set { field = value; OnParameterChanged(); } }
-    public bool CanDamageDevices { get; set { field = value; OnParameterChanged(); } }
-    public bool IsSpectator { get; set { field = value; OnParameterChanged(); } }
-    public bool IsTeleporting { get; set { field = value; OnParameterChanged(); } }
-    public bool IsDebugPlayer { get; set { field = value; OnParameterChanged(); } }
-    public string? Tags { get; set { field = value; OnParameterChanged(); } }
-    public int AccountLevel { get; set { field = value; OnParameterChanged(); } }
+    public bool CanEditMap { get; set => SetIfChanged(ref field, value); }
+    public bool CanDamageEntities { get; set => SetIfChanged(ref field, value); }
+    public bool CanDamagePlayers { get; set => SetIfChanged(ref field, value); }
+    public bool CanCreateDevices { get; set => SetIfChanged(ref field, value); }
+    public bool CanDamageDevices { get; set => SetIfChanged(ref field, value); }
+    public bool IsSpectator { get; set => SetIfChanged(ref field, value); }
+    public bool IsTeleporting { get; set => SetIfChanged(ref field, value); }
+    public bool IsDebugPlayer { get; set => SetIfChanged(ref field, value); }
+    public string? Tags { get; set => SetIfChanged(ref field, value); }
+    public int AccountLevel { get; set => SetIfChanged(ref field, value); }
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

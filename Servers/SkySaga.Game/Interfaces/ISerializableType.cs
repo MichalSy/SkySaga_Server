@@ -1,6 +1,4 @@
-﻿using RakNet;
-
-namespace SkySaga.Game.Interfaces;
+﻿namespace SkySaga.Game.Interfaces;
 
 public interface ISerializableType
 {

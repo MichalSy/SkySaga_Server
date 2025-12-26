@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text.Json;
-
-namespace SkySaga.Game.Extensions;
+﻿namespace SkySaga.Game.Extensions;
 
 public static class JsonElementExtensions
 {

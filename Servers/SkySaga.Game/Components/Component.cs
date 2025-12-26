@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-
-using RakNet;
+﻿using System.Runtime.CompilerServices;
 
 namespace SkySaga.Game.Components;
 
@@ -13,11 +10,18 @@ public abstract class Component
 
     public event ParameterChangedEventHandler? ParameterChanged;
 
-    protected void OnParameterChanged([CallerMemberName] string? parameterName = null)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(parameterName);
 
-        ParameterChanged?.Invoke(this, parameterName);
+    protected bool SetIfChanged<T>(ref T field, T value, [CallerMemberName] string? parameterName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+            return false;
+
+        field = value;
+
+
+        ParameterChanged?.Invoke(this, parameterName ?? string.Empty);
+
+        return true;
     }
 
     public abstract bool TrySync(string parameterName, BitStream bitStream);

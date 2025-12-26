@@ -1,16 +1,8 @@
-﻿using System;
-using System.Numerics;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-using SkySaga.Game.Interfaces;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public class ChunkSync : ISerializablePacket
 {
-    public Vector<int> Coords;
+    public Vector3Int Coords;
 
     public byte[]? Data1;
     public byte[]? Data2;
@@ -23,9 +15,9 @@ public class ChunkSync : ISerializablePacket
 
         bitStream.WritePacketId(PacketId.ChunkSync);
 
-        bitStream.WriteBits(BitConverter.GetBytes(Coords[0]), 32 - Util.NumBitsRequiredUInt32(32), true);
-        bitStream.WriteBits(BitConverter.GetBytes(Coords[1]), 32 - Util.NumBitsRequiredUInt32(32), true);
-        bitStream.WriteBits(BitConverter.GetBytes(Coords[2]), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(Coords.X), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(Coords.Y), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(Coords.Z), 32 - Util.NumBitsRequiredUInt32(32), true);
 
         bitStream.WriteOptional(Data1, (value) =>
         {

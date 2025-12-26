@@ -1,11 +1,4 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-using SkySaga.Game.Interfaces;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public class EntityAdd : ISerializablePacket
 {

@@ -1,13 +1,9 @@
-﻿using System;
-
-using RakNet;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class PhysicsComponent : Component
 {
-    public bool FineGrainCollisionOnly { get; set { field = value; OnParameterChanged(); } }
-    public bool IsMoveable { get; set { field = value; OnParameterChanged(); } } = true;
+    public bool FineGrainCollisionOnly { get; set => SetIfChanged(ref field, value); }
+    public bool IsMoveable { get; set => SetIfChanged(ref field, value); } = true;
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Diagnostics;
-
-using RakNet;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public static class InventoryItemSwap
 {
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
         if (!bitStream.Read(out int sourceEntityID))
             return false;

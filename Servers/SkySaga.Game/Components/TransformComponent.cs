@@ -1,30 +1,26 @@
-﻿using System;
-using System.Numerics;
-
-using RakNet;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class TransformComponent : Component
 {
-    public Vector<int> Position { get; set { field = value; OnParameterChanged(); } }
-    public float YawDegrees { get; set { field = value; OnParameterChanged(); } }
-    public Vector3 Size { get; set { field = value; OnParameterChanged(); } }
-    public float Scale { get; set { field = value; OnParameterChanged(); } }
+    public Vector3 Position { get; set => SetIfChanged(ref field, value); }
+    public float Yaw { get; set => SetIfChanged(ref field, value); }
+    public Vector3 Size { get; set => SetIfChanged(ref field, value); }
+    public float Scale { get; set => SetIfChanged(ref field, value); }
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {
         if (parameterName.Equals(nameof(Position), StringComparison.OrdinalIgnoreCase))
         {
-            bitStream.WriteBits(BitConverter.GetBytes(Position[0]), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
-            bitStream.WriteBits(BitConverter.GetBytes(Position[1]), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
-            bitStream.WriteBits(BitConverter.GetBytes(Position[2]), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
+            bitStream.WriteBits(BitConverter.GetBytes((int)(Position.X * 64f)), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
+            bitStream.WriteBits(BitConverter.GetBytes((int)(Position.Y * 64f)), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
+            bitStream.WriteBits(BitConverter.GetBytes((int)(Position.Z * 64f)), 32 - Util.NumBitsRequiredUInt32(0x10000u), true);
 
             return true;
         }
-        else if (parameterName.Equals(nameof(YawDegrees), StringComparison.OrdinalIgnoreCase))
+        else if (parameterName.Equals(nameof(Yaw), StringComparison.OrdinalIgnoreCase))
         {
-            bitStream.WriteBits(BitConverter.GetBytes(YawDegrees), 32 - Util.NumBitsRequiredUInt32(0x6400u), true);
+            int tmpValue = (int)(Yaw / 0.03125f) + 0x3200;
+            bitStream.WriteBits(BitConverter.GetBytes(tmpValue), 32 - Util.NumBitsRequiredUInt32(0x6400u), true);
 
             return true;
         }

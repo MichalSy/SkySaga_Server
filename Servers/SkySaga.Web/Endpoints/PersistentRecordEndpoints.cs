@@ -43,8 +43,8 @@ public static class PersistentRecordEndpoints
                         new
                         {
                             uuid = _characterUUID,
-                            name = "EDITz",
-                            homeBiome = "Desert", // (string?)null, // null > character creation
+                            name = "Player",
+                            homeBiome = "Sky", // (string?)null, // null > character creation
                             positionInList = 0
                         }
                     }

@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-
-using RakNet;
-
-using SkySaga.Game.Components;
-
-namespace SkySaga.Game.Entities;
+﻿namespace SkySaga.Game.Entities;
 
 public class Entity
 {
@@ -46,13 +36,6 @@ public class Entity
         if (syncIndex > 0)
             _sync.Set(syncIndex, true);
     }
-
-    [Obsolete]
-    public bool TryGetComponent(string name, [NotNullWhen(true)] out Component? component)
-    {
-        return _components.TryGetValue(name, out component);
-    }
-
 
     public bool TryGetComponent<T>([NotNullWhen(true)] out T? component) where T : Component
     {

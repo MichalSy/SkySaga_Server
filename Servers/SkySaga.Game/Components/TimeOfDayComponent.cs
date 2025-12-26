@@ -1,19 +1,13 @@
-﻿using System;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class TimeOfDayComponent : Component
 {
-    public int StartTimeOfDay { get; set { field = value; OnParameterChanged(); } }
-    public bool FixedTimeOfDay { get; set { field = value; OnParameterChanged(); } }
-    public int DayNightCycleDuration { get; set { field = value; OnParameterChanged(); } }
-    public ulong RealWorldStartTime { get; set { field = value; OnParameterChanged(); } }
-    public int TimeStretch { get; set { field = value; OnParameterChanged(); } }
-    public int TimeOfDayOffset { get; set { field = value; OnParameterChanged(); } }
+    public int StartTimeOfDay { get; set => SetIfChanged(ref field, value); }
+    public bool FixedTimeOfDay { get; set => SetIfChanged(ref field, value); }
+    public int DayNightCycleDuration { get; set => SetIfChanged(ref field, value); }
+    public ulong RealWorldStartTime { get; set => SetIfChanged(ref field, value); }
+    public int TimeStretch { get; set => SetIfChanged(ref field, value); }
+    public int TimeOfDayOffset { get; set => SetIfChanged(ref field, value); }
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {

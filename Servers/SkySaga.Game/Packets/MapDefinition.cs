@@ -1,19 +1,11 @@
-﻿using System;
-using System.Numerics;
-
-using RakNet;
-
-using SkySaga.Game.Extensions;
-using SkySaga.Game.Interfaces;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public class MapDefinition : ISerializablePacket
 {
     /// <summary>
-    /// Max 32,32,32
+    /// Map size in chunks (x, y, z). Max 32,32,32
     /// </summary>
-    public Vector<int> MapSizeChunks;
+    public Vector3Int MapSizeChunks;
 
     /// <summary>
     /// Crc32 Hash of biome name
@@ -37,9 +29,9 @@ public class MapDefinition : ISerializablePacket
 
         bitStream.WritePacketId(PacketId.MapDefinition);
 
-        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks[0]), 32 - Util.NumBitsRequiredUInt32(32), true);
-        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks[1]), 32 - Util.NumBitsRequiredUInt32(32), true);
-        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks[2]), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks.X), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks.Y), 32 - Util.NumBitsRequiredUInt32(32), true);
+        bitStream.WriteBits(BitConverter.GetBytes(MapSizeChunks.Z), 32 - Util.NumBitsRequiredUInt32(32), true);
 
         bitStream.WriteOptional(BiomeType, (value) =>
         {

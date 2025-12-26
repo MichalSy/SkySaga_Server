@@ -1,8 +1,4 @@
-﻿using System;
-
-using RakNet;
-
-namespace SkySaga.Game.Components;
+﻿namespace SkySaga.Game.Components;
 
 public class ClientCraftingDropSlotsComponent : CraftingDropSlotsComponent
 {

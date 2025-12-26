@@ -1,12 +1,8 @@
-﻿using System.Diagnostics;
-
-using RakNet;
-
-namespace SkySaga.Game.Packets;
+﻿namespace SkySaga.Game.Packets;
 
 public static class ClientInitialSyncFinished
 {
-    public static bool Handle(Connection connection, BitStream bitStream)
+    public static bool Handle(PlayerConnection connection, BitStream bitStream)
     {
         Debug.WriteLine("", nameof(ClientInitialSyncFinished));
 
