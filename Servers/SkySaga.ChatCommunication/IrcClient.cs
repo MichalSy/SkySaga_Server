@@ -163,9 +163,8 @@ public class IrcClient : IDisposable
         _logger.LogInformation("Client registered: {Nickname} / {Username}", _nickname, _username);
 
         await SendAsync($":server 001 {_nickname} :Welcome to the IRC server");
-        //await SendAsync($":server 002 {_nickname} :Your host is server");
-        //await SendAsync($":server 003 {_nickname} :This server was created");
-        //await SendAsync($":server 004 {_nickname} server 1.0 i mt");
+        await HandleJoinAsync(["JOIN", "#WorldChat"]);
+
     }
 
     private async Task HandleJoinAsync(string[] parts)
@@ -192,7 +191,7 @@ public class IrcClient : IDisposable
         _logger.LogInformation("Client {Nickname} joined channel {ChannelName}", _nickname, channelName);
 
         await SendAsync($":{_nickname} JOIN {channelName}");
-        await BroadcastToChannelAsync(channelName, $":{_nickname} JOIN {channelName}", excludeSelf: false);
+        await BroadcastToChannelAsync(channelName, $":{_nickname} JOIN {channelName}", excludeSelf: true);
     }
 
     private async Task HandlePartAsync(string[] parts)
@@ -234,14 +233,8 @@ public class IrcClient : IDisposable
         }
 
         var target = parts[1];
-        var messageStart = line.IndexOf(':', parts.Length > 2 ? 2 : 1);
-        if (messageStart < 0)
-        {
-            _logger.LogWarning("PRIVMSG command from {Nickname} without message", _nickname);
-            return;
-        }
 
-        var message = line[(messageStart + 1)..];
+        var message = parts[2];
 
         if (target.StartsWith("#"))
         {
@@ -286,7 +279,8 @@ public class IrcClient : IDisposable
 
     private async Task BroadcastToChannelAsync(string channelName, string message, bool excludeSelf = true)
     {
-        if (_server.TryGetChannel(channelName, out var channel))
+        var channel = _server.GetOrCreateChannel(channelName);
+        if (channel is { })
         {
             await channel.BroadcastAsync(message, excludeClient: excludeSelf ? this : null);
         }

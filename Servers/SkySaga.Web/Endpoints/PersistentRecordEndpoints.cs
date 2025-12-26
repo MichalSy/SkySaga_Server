@@ -54,7 +54,7 @@ public static class PersistentRecordEndpoints
 
         app.MapPost("/api/persistent-record/characters/_create", () =>
         {
-            _characterUUID = Guid.NewGuid();
+            _characterUUID = Guid.CreateVersion7();
 
             return new
             {

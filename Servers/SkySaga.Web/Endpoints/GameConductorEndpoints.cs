@@ -17,7 +17,7 @@ public static class GameConductorEndpoints
                 new
                 {
                     uuid = Guid.NewGuid(),
-                    datacentre = "UK",
+                    datacentre = "EU",
                     ip = "127.0.0.1",
                     port = 5164
                 }
