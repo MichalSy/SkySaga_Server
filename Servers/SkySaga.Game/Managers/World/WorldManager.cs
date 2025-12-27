@@ -258,7 +258,7 @@ public sealed class WorldManager : IWorldManager
         {
             if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
             {
-                transformComponent.Position = new Vector3(31.25f, 1f, 19.8f);
+                transformComponent.Position = new Vector3(31.25f, 11f, 19.8f);
             }
         }
 
