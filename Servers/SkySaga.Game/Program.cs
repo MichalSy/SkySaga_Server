@@ -32,6 +32,11 @@ catch
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
+        // Register database services
+        services.AddSingleton<DatabaseContext>(sp =>
+            new DatabaseContext("Data/skysaga_worlds.db"));
+        services.AddSingleton<IWorldRepository, WorldRepository>();
+
         // Register managers and services
         services.AddSingleton<PlayerConnectionManager>();
         services.AddSingleton<IWorldManager, WorldManager>();

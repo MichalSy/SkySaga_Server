@@ -75,6 +75,22 @@ public static class BitStreamExtensions
         return true;
     }
 
+    public static bool ReadUInt32Reverse(this BitStream bitStream, out uint result)
+    {
+        var buffer = new byte[4];
+
+        if (!bitStream.ReadBits(buffer, 32, true))
+        {
+            result = 0;
+            return false;
+        }
+
+        Array.Reverse(buffer, 0, 4);
+
+        result = BitConverter.ToUInt32(buffer, 0);
+        return true;
+    }
+
     #endregion
 
     #region Write
@@ -97,6 +113,14 @@ public static class BitStreamExtensions
     public static void WriteUInt64(this BitStream bitStream, ulong value)
     {
         bitStream.WriteBits(BitConverter.GetBytes(value), sizeof(ulong) * 8, true);
+    }
+
+    public static bool WriteUInt32Reverse(this BitStream bitStream, uint value)
+    {
+        var tmpArray = BitConverter.GetBytes(value);
+        Array.Reverse(tmpArray, 0, 4);
+        bitStream.WriteBits(tmpArray, 32, true);
+        return true;
     }
 
     public static void WriteString(this BitStream bitStream, string? value)

@@ -240,7 +240,7 @@ public class IrcClient : IDisposable
         {
             // Channel message
             _logger.LogDebug("Channel message from {Nickname} to {Channel}: {Message}", _nickname, target, message);
-            await BroadcastToChannelAsync(target, $":{_nickname} PRIVMSG {target} :{message}", excludeSelf: false);
+            await BroadcastToChannelAsync(target, $":{_nickname} PRIVMSG {target} :{message}", excludeSelf: true);
         }
         else
         {

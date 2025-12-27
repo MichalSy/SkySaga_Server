@@ -3,34 +3,149 @@ using System.Linq;
 namespace SkySaga.Game.Managers.World;
 
 /// <summary>
-/// World manager that combines entity and chunk management.
+/// World manager that combines entity and chunk management with database persistence.
 /// Provides a single entry point for world state access.
 /// </summary>
 public sealed class WorldManager : IWorldManager
 {
     private readonly MapChunkManager _chunkManager;
+    private readonly IWorldRepository _worldRepository;
+    private readonly ILogger<WorldManager>? _logger;
 
     public IMapEntityManager EntityManager { get; }
     public IMapChunkManager ChunkManager => _chunkManager;
     public MapDefinition Definition { get; set; }
+    public Guid WorldId { get; private set; }
 
-    public WorldManager(PlayerConnectionManager playerConnectionManager)
+    public WorldManager(
+        PlayerConnectionManager playerConnectionManager,
+        IWorldRepository worldRepository,
+        ILogger<WorldManager>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(playerConnectionManager);
+        ArgumentNullException.ThrowIfNull(worldRepository);
 
         EntityManager = new EntityManager();
-        _chunkManager = new MapChunkManager(playerConnectionManager);
+        _chunkManager = new MapChunkManager(playerConnectionManager, this);
+        _worldRepository = worldRepository;
+        _logger = logger;
 
-        // Initialize with default map definition
-        Definition = new MapDefinition
+        // Initialize world asynchronously
+        InitializeWorldAsync("DefaultWorld").GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Initializes or loads a world from the database.
+    /// </summary>
+    private async Task InitializeWorldAsync(string worldName)
+    {
+        _logger?.LogInformation("Initializing world '{WorldName}'...", worldName);
+
+        // Try to load existing world from database
+        var existingWorld = await _worldRepository.GetWorldByNameAsync(worldName);
+
+        if (existingWorld != null)
         {
-            MapSizeChunks = new Vector3Int(4, 4, 4),
-            BiomeType = Util.ComputeCrc32("Sky_Island"),
-            GameMode = 1
-        };
+            // Load from database
+            _logger?.LogInformation("Loading existing world '{WorldName}' (ID: {WorldId})", worldName, existingWorld.Id);
 
-        // Generate starting island
-        GenerateStartIsland();
+            WorldId = existingWorld.Id;
+            Definition = existingWorld.ToMapDefinition();
+
+            // Load all chunks from database
+            await LoadChunksFromDatabaseAsync();
+        }
+        else
+        {
+            // Create new world
+            _logger?.LogInformation("Creating new world '{WorldName}'...", worldName);
+
+            WorldId = Guid.NewGuid();
+
+            // Initialize with default map definition
+            Definition = new MapDefinition
+            {
+                MapSizeChunks = new Vector3Int(4, 4, 4),
+                BiomeType = Util.ComputeCrc32("Forest_Easy"),
+                GameMode = 1
+            };
+
+            // Save world to database
+            var worldModel = WorldDBO.FromMapDefinition(WorldId, worldName, Definition);
+            await _worldRepository.CreateWorldAsync(worldModel);
+
+            // Generate starting island
+            GenerateStartIsland();
+
+            // Save generated chunks to database
+            await SaveAllChunksAsync();
+
+            _logger?.LogInformation("New world '{WorldName}' created with ID: {WorldId}", worldName, WorldId);
+        }
+
+        // Initialize world entities (not persisted)
+        GenerateWorldEntities();
+    }
+
+    /// <summary>
+    /// Loads all chunks for this world from the database.
+    /// </summary>
+    private async Task LoadChunksFromDatabaseAsync()
+    {
+        var chunks = await _worldRepository.GetAllChunksAsync(WorldId);
+        int chunkCount = 0;
+
+        foreach (var chunkModel in chunks)
+        {
+            var chunk = chunkModel.ToWorldChunk();
+            _chunkManager.SetChunk(chunk.Position, chunk);
+            chunkCount++;
+        }
+
+        _logger?.LogInformation("Loaded {ChunkCount} chunks from database", chunkCount);
+    }
+
+    /// <summary>
+    /// Saves all loaded chunks to the database.
+    /// </summary>
+    public async Task SaveAllChunksAsync()
+    {
+        var chunks = _chunkManager.GetLoadedChunks()
+            .Select(chunk => WorldChunkDBO.FromWorldChunk(WorldId, chunk))
+            .ToList();
+
+        if (chunks.Count > 0)
+        {
+            try
+            {
+                await _worldRepository.SaveChunksBatchAsync(chunks);
+                _logger?.LogDebug("Saved {ChunkCount} chunks to database", chunks.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to save chunks to database");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Saves a single chunk to the database.
+    /// </summary>
+    public async Task SaveChunkAsync(Vector3Int position)
+    {
+        try
+        {
+            if (_chunkManager.TryGetChunk(position, out var chunk))
+            {
+                var chunkModel = WorldChunkDBO.FromWorldChunk(WorldId, chunk);
+                await _worldRepository.SaveChunkAsync(chunkModel);
+                _logger?.LogDebug("Saved chunk at {Position}", position);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to save chunk at {Position}", position);
+        }
     }
 
     /// <summary>
@@ -88,61 +203,7 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 24);
-                }
-            }
-
-            // Schachbrett-Pattern - Fortsetzung von Chunk (0,0,0)
-            int blockType = 1;
-            int posX = 0;
-            int posZ = 0;
-
-            // Springe bis zur Position wo wir im vorigen Chunk aufgehört haben
-            // Chunk (0,0,0) kann max 16*16 = 256 Positionen mit 2er-Schritten haben
-            // Das reicht für Blöcke 1-256, also brauchen wir nur 1-80
-            // Berechne wie viele in Chunk 0,0,0 passen
-            int positionsPerRow = 32 / 2; // 16 mit 2er-Schritten
-            int maxInChunk0 = positionsPerRow * (32 / 2); // 16 * 16 = 256 möglich, aber nur 80 nötig
-
-            // Finde die Position wo wir mit Block 1 in Chunk 0,0,0 angefangen haben
-            // und berechne wo wir enden
-            int nextBlockType = 1;
-            int tempX = 0;
-            int tempZ = 0;
-
-            while (nextBlockType <= 80 && (tempX < 32 && tempZ < 32))
-            {
-                nextBlockType++;
-                tempX += 2;
-                if (tempX >= 32)
-                {
-                    tempX = 0;
-                    tempZ += 2;
-                }
-            }
-
-            // Jetzt setzen wir die verbleibenden Blöcke in Chunk 1,0,0
-            blockType = nextBlockType;
-            posX = 5;
-            posZ = 5;
-
-            while (blockType <= 255)
-            {
-                if (posX < 32 && posZ < 32)
-                {
-                    chunk.SetVoxel(posX, 1, posZ, (byte)blockType);
-                    blockType++;
-                    posX += 2;
-
-                    if (posX >= 32)
-                    {
-                        posX = 5;
-                        posZ += 2;
-                    }
-                }
-                else
-                {
-                    break;
+                    chunk.SetVoxel(x, 0, z, 1);
                 }
             }
         }
@@ -156,7 +217,7 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 24);
+                    chunk.SetVoxel(x, 0, z, 1);
                 }
             }
 
@@ -176,20 +237,12 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 24);
+                    chunk.SetVoxel(x, 0, z, 1);
                 }
             }
         }
 
-        {
-            var chunk1 = ChunkManager.GetOrCreateChunk(new Vector3Int(1, 0, 0));
 
-            chunk1.SetVoxel(5, 1, 31, blockType: 13); // Place a special block (block type 30) at (5,1,5)
-            chunk1.SetVoxel(6, 2, 31, blockType: 13); // Place a special block (block type 30) at (5,1,5)
-
-            var chunk3 = ChunkManager.GetOrCreateChunk(new Vector3Int(1, 0, 1));
-            chunk3.SetVoxel(7, 2, 0, blockType: 13); // Place a special block (block type 30) at (5,1,5)
-        }
 
         // Initialize world entities
         GenerateWorldEntities();
@@ -205,7 +258,7 @@ public sealed class WorldManager : IWorldManager
         {
             if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
             {
-                transformComponent.Position = new Vector3(31.25f, 1.1f, 19.8f);
+                transformComponent.Position = new Vector3(31.25f, 1f, 19.8f);
             }
         }
 
@@ -324,12 +377,15 @@ public sealed class WorldManager : IWorldManager
     }
 
     /// <summary>
-    /// Resets the world to initial state (useful for testing/reloading).
+    /// Resets the world to its initial state.
     /// </summary>
     public void Reset()
     {
-        ((EntityManager)EntityManager).Clear();
-        ChunkManager.ClearAll();
+        _chunkManager.ClearAll();
         GenerateStartIsland();
+
+        SaveAllChunksAsync().GetAwaiter().GetResult();
+        _logger?.LogInformation("World reset completed");
     }
+
 }

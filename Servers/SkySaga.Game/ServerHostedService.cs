@@ -6,11 +6,13 @@ namespace SkySaga.Game;
 public class ServerHostedService(
     Server server,
     ILogger<ServerHostedService> logger,
-    IHostApplicationLifetime lifetime) : IHostedService
+    IHostApplicationLifetime lifetime,
+    IWorldManager worldManager) : IHostedService
 {
     private readonly Server _server = server ?? throw new ArgumentNullException(nameof(server));
     private readonly ILogger<ServerHostedService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IHostApplicationLifetime _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+    private readonly IWorldManager _worldManager = worldManager ?? throw new ArgumentNullException(nameof(worldManager));
     private Task? _tickTask;
     private CancellationTokenSource? _tickCancellation;
 
@@ -37,6 +39,13 @@ public class ServerHostedService(
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Stopping server...");
+
+        // Save world state to database
+        if (_worldManager is WorldManager wm)
+        {
+            _logger.LogInformation("Saving world to database...");
+            await wm.SaveAllChunksAsync();
+        }
 
         // Signal the tick loop to stop
         _tickCancellation?.Cancel();

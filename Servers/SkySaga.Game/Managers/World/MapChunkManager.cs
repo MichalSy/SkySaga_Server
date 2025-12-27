@@ -1,9 +1,10 @@
 ﻿namespace SkySaga.Game.Managers.World;
 
-public class MapChunkManager(PlayerConnectionManager playerConnectionManager) : IMapChunkManager
+public class MapChunkManager(PlayerConnectionManager playerConnectionManager, IWorldManager? worldManager = null) : IMapChunkManager
 {
     private readonly Dictionary<Vector3Int, WorldChunk> _chunks = [];
     private readonly PlayerConnectionManager _playerConnectionManager = playerConnectionManager ?? throw new ArgumentNullException(nameof(playerConnectionManager));
+    private readonly IWorldManager? _worldManager = worldManager;
 
     public bool TryGetChunk(Vector3Int chunkPosition, [NotNullWhen(true)] out WorldChunk? chunk)
     {
@@ -52,6 +53,12 @@ public class MapChunkManager(PlayerConnectionManager playerConnectionManager) : 
         // Broadcast only the changed voxel to all connected players (much more efficient than full ChunkSync)
         var partialSync = GetPartialChunkEditSync(chunkPosition, voxelPosition, oldBlockType, blockType);
         _playerConnectionManager.BroadcastToAll(partialSync);
+
+        // Save chunk async (fire-and-forget) to database
+        if (_worldManager is WorldManager wm)
+        {
+            _ = Task.Run(async () => await wm.SaveChunkAsync(chunkPosition));
+        }
     }
 
 
@@ -117,22 +124,6 @@ public class MapChunkManager(PlayerConnectionManager playerConnectionManager) : 
         for (int i = 0; i < dataSize; i++)
         {
             syncData[1 + i] = (voxelData[i] == 0) ? (byte)255 : voxelData[i];
-        }
-
-        if (chunkPosition.X == 0 && chunkPosition.Y == 0 && chunkPosition.Z == 0)
-        {
-            Array.Fill<byte>(syncData, 42);
-            syncData[0] = 0;
-
-            byte[] realData2 = new byte[dataSize + 1];
-            Array.Fill<byte>(realData2, value: (byte)0x00); // alle Metadata = 0
-
-            return new ChunkSync
-            {
-                Coords = new Vector3Int(chunkPosition.X, chunkPosition.Y, chunkPosition.Z),
-                Data1 = syncData,
-                //Data2 = realData2,
-            };
         }
 
         //metaData.CopyTo(syncMeta, 1);

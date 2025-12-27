@@ -11,5 +11,4 @@ public interface IWorldManager
 
     void SendInitialChunks(PlayerConnection connection);
     void SendInitialEntities(PlayerConnection connection, Entity player, PlayerInitializer playerInitializer);
-    void Reset();
 }

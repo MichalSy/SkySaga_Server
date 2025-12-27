@@ -78,6 +78,19 @@ public class WorldChunk(Vector3Int position)
     }
 
     public byte[] GetMetadataForNetwork() => (byte[])_metadata.Clone(); // 1:1 senden
+
+    /// <summary>
+    /// Sets all metadata from a byte array.
+    /// Used for deserialization from storage.
+    /// </summary>
+    public void SetMetadataData(byte[] data)
+    {
+        if (data.Length != _chunkVolume)
+            throw new ArgumentException($"Metadata must be exactly {_chunkVolume} bytes", nameof(data));
+
+        Array.Copy(data, _metadata, _chunkVolume);
+    }
+
     public byte[] GetRawMetadataForNetwork()
     {
         const int data2Size = 24576; // 32768 × 6 / 8

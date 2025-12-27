@@ -65,6 +65,7 @@ public class PlayerConnection
             PacketId.PerformVoxelActions => PerformVoxelActions.Handle(this, bitStream),
             PacketId.RequestEquipInventoryItem => RequestEquipInventoryItem.Handle(this, bitStream),
             PacketId.RequestChatChannelData => RequestChatChannelData.Handle(this, bitStream),
+            PacketId.SetCharacterCustomisationData => SetCharacterCustomisationData.Handle(this, bitStream),
             _ => false
         };
     }

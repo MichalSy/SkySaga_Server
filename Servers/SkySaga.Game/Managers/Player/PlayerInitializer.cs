@@ -68,10 +68,10 @@ public class PlayerInitializer(IMapEntityManager entityManager)
                 clientInventoryComponent.InventoryEntityList.Add(0);
 
             // Armor pieces
-            CreateAndEquipInventoryItem(clientInventoryComponent, 2, "ExplorerArmourHead");
-            CreateAndEquipInventoryItem(clientInventoryComponent, 3, "ExplorerArmourTorso");
-            CreateAndEquipInventoryItem(clientInventoryComponent, 4, "ExplorerArmourArms");
-            CreateAndEquipInventoryItem(clientInventoryComponent, 5, "ExplorerArmourLegs");
+            //CreateAndEquipInventoryItem(clientInventoryComponent, 2, "ExplorerArmourHead");
+            //CreateAndEquipInventoryItem(clientInventoryComponent, 3, "ExplorerArmourTorso");
+            //CreateAndEquipInventoryItem(clientInventoryComponent, 4, "ExplorerArmourArms");
+            //CreateAndEquipInventoryItem(clientInventoryComponent, 5, "ExplorerArmourLegs");
 
             // Inventory items
             CreateAndEquipInventoryItem(clientInventoryComponent, 9, "Dirt", 10);

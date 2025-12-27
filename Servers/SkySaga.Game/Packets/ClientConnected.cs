@@ -12,7 +12,7 @@ public static class ClientConnected
         {
             ServerOwnerGuid = "482f2571-e9a6-4f52-97bd-2231a87a9f9a",
             ServerOwnerName = "Dude",
-            ServerBiome = "Desert",
+            ServerBiome = "Forest_Easy",
             ServerAdventureCrc = Util.ComputeCrc32("Home_Island_Adventure"),
             IsMyWorld = true,
             ChatHost = "127.0.0.1",
