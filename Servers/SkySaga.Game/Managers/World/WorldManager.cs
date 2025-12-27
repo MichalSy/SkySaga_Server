@@ -65,8 +65,8 @@ public sealed class WorldManager : IWorldManager
             // Initialize with default map definition
             Definition = new MapDefinition
             {
-                MapSizeChunks = new Vector3Int(4, 4, 4),
-                BiomeType = Util.ComputeCrc32("Forest_Easy"),
+                MapSizeChunks = new Vector3Int(2, 2, 2),
+                BiomeType = Util.ComputeCrc32("Sky_Island"),
                 GameMode = 1
             };
 
@@ -162,7 +162,7 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 1);
+                    chunk.SetVoxel(x, 10, z, 1);
                 }
             }
 
@@ -177,7 +177,7 @@ public sealed class WorldManager : IWorldManager
             {
                 if (posX < 32 && posZ < 32)
                 {
-                    chunk.SetVoxel(posX, 1, posZ, (byte)blockType);
+                    chunk.SetVoxel(posX, 11, posZ, (byte)blockType);
                     blockType++;
                     posX += 2; // 1 Block + 1 Abstand
 
@@ -203,7 +203,7 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 1);
+                    chunk.SetVoxel(x, 10, z, 1);
                 }
             }
         }
@@ -217,14 +217,14 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 1);
+                    chunk.SetVoxel(x, 10, z, 1);
                 }
             }
 
             // Decorative blocks - block type 20
             for (int i = 0; i < 14; i += 2)
             {
-                chunk.SetVoxel(4 + i, 1, 14, 20);
+                chunk.SetVoxel(4 + i, 11, 14, 20);
             }
         }
 
@@ -237,7 +237,7 @@ public sealed class WorldManager : IWorldManager
             {
                 for (int x = 0; x < 32; x++)
                 {
-                    chunk.SetVoxel(x, 0, z, 1);
+                    chunk.SetVoxel(x, 10, z, 1);
                 }
             }
         }
@@ -276,53 +276,63 @@ public sealed class WorldManager : IWorldManager
             }
         }
 
-        // Sheep
-        if (EntityManager.TryCreateEntity("Sheep", out var sheep))
+        // SeaLevel
+        if (EntityManager.TryCreateEntity("SeaLevel", out var sea))
         {
-            if (sheep.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(31.25f, 1.1f, 9.8f);
-
-            if (sheep.TryGetComponent<ClientHealthComponent>(out var clientHealthComponent))
-                clientHealthComponent.HalfHearts = 50;
-
-            if (sheep.TryGetComponent<ClientCharacterPhysicsComponent>(out var clientCharacterPhysicsComponent))
-                clientCharacterPhysicsComponent.IsMoveable = true;
+            if (sea.TryGetComponent<SeaLevelComponent>(out var seaLevelComponent))
+            {
+                seaLevelComponent.SeaFloorLevel = 0;
+                seaLevelComponent.SeaLevel = 1;
+            }
         }
 
-        // Bear
-        if (EntityManager.TryCreateEntity("Iron", out var bear))
-        {
-            if (bear.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(34.4f, 1.1f, 9.8f);
-        }
+        //// Sheep
+        //if (EntityManager.TryCreateEntity("Sheep", out var sheep))
+        //{
+        //    if (sheep.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(31.25f, 1.1f, 9.8f);
 
-        // Chicken
-        if (EntityManager.TryCreateEntity("CactusBlast", out var chicken))
-        {
-            if (chicken.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(37.5f, 1.1f, 9.8f);
-        }
+        //    if (sheep.TryGetComponent<ClientHealthComponent>(out var clientHealthComponent))
+        //        clientHealthComponent.HalfHearts = 50;
 
-        // Goat
-        if (EntityManager.TryCreateEntity("Bush_Desert_A", out var goat))
-        {
-            if (goat.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(40.625f, 1.1f, 9.8f);
-        }
+        //    if (sheep.TryGetComponent<ClientCharacterPhysicsComponent>(out var clientCharacterPhysicsComponent))
+        //        clientCharacterPhysicsComponent.IsMoveable = true;
+        //}
 
-        // Knight
-        if (EntityManager.TryCreateEntity("Knight", out var knight))
-        {
-            if (knight.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(43.75f, 1.1f, 9.8f);
-        }
+        //// Bear
+        //if (EntityManager.TryCreateEntity("Iron", out var bear))
+        //{
+        //    if (bear.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(34.4f, 1.1f, 9.8f);
+        //}
 
-        // Monkey
-        if (EntityManager.TryCreateEntity("Monkey", out var monkey))
-        {
-            if (monkey.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(46.8f, 1.2f, 9.8f);
-        }
+        //// Chicken
+        //if (EntityManager.TryCreateEntity("CactusBlast", out var chicken))
+        //{
+        //    if (chicken.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(37.5f, 1.1f, 9.8f);
+        //}
+
+        //// Goat
+        //if (EntityManager.TryCreateEntity("Bush_Desert_A", out var goat))
+        //{
+        //    if (goat.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(40.625f, 1.1f, 9.8f);
+        //}
+
+        //// Knight
+        //if (EntityManager.TryCreateEntity("Knight", out var knight))
+        //{
+        //    if (knight.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(43.75f, 1.1f, 9.8f);
+        //}
+
+        //// Monkey
+        //if (EntityManager.TryCreateEntity("Monkey", out var monkey))
+        //{
+        //    if (monkey.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(46.8f, 1.2f, 9.8f);
+        //}
     }
 
 

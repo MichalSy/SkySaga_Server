@@ -26,7 +26,7 @@ public class PlayerInitializer(IMapEntityManager entityManager)
 
 
         if (player.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-            smoothedTransformComponent.Position = new Vector3(35.45f, 6f, 19.82f);
+            smoothedTransformComponent.Position = new Vector3(35.45f, 13f, 19.82f);
 
         if (player.TryGetComponent<ClientFeatureUnlockComponent>(out var clientFeatureUnlockComponent))
             clientFeatureUnlockComponent.FeatureIsLockedStatusList.Add(true);
