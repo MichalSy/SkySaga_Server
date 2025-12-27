@@ -19,7 +19,7 @@ HANDLE WINAPI hk_CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bIni
 {
 	HANDLE hResult = o_CreateMutexA(lpMutexAttributes, bInitialOwner, lpName);
 
-	if (_stricmp(lpName, "BlitzTechAppInstanceMutex") == 0)
+	if (lpName && _stricmp(lpName, "BlitzTechAppInstanceMutex") == 0)
 	{
 		WriteProcessMemory(GetCurrentProcess(), LPVOID(0x412252), "\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 10, nullptr);
 

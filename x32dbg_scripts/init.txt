@@ -1,0 +1,52 @@
+
+// init hardware breakpoint
+bph 0041225C
+SetHardwareBreakpointCommand 0041225C, "scriptcmd call init"
+
+
+goto main
+
+init:
+    log "Init Patches"
+    
+    mov [0x00E2213C], 0x06
+    log "Loglevel changed to 6"
+
+    bp 00854BF2, "Logging"
+    bpl 00854BF2, "{s:eax}"
+    SetBreakpointCommand 00854BF2, "run"
+    log "activate logging"
+
+    //activate logging for PerformVoxelActions
+    asm 007E937F, "jne 0x007E9622"
+
+    // activate EntityMoved logging
+    //asm 007A6267, "jne 0x007A645D"
+
+    // activate EquippedItemUsed logging
+    asm 007938F8, "jne 0x00793AF7"
+
+    // activate RequestEquipInventoryItem logging
+    asm 007932CF, "jne 0x00793562"
+
+    // activate SetLookAtDirection logging
+    // asm 0084BCF7, "jne 0x0084BEED"
+
+    // activate RPCSetPlayerState logging
+    asm 00845DE5, "jne 0x00845F85"
+
+    // activate RPCCharacterStatePitchChanged logging
+    asm 00846485, "jne 0x00846619"
+
+    // activate RequestUnEquipInventoryItem logging
+    asm 00793653, "jne 0x00793832"
+
+    // activate RPCRequestChatChannelData logging
+    //asm 0077BE9B, "jne 0x0077C010"
+
+    goto main
+
+
+
+main:
+    run
