@@ -259,6 +259,7 @@ public sealed class WorldManager : IWorldManager
             if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
             {
                 transformComponent.Position = new Vector3(31.25f, 11f, 19.8f);
+                transformComponent.YawDegrees = 45;
             }
         }
 
@@ -288,8 +289,12 @@ public sealed class WorldManager : IWorldManager
 
         if (EntityManager.TryCreateEntity("Christmas_Tree", out var tree))
         {
-            if (tree.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(36.25f, 11.0f, 25.8f);
+            if (tree.TryGetComponent<TransformComponent>(out var treeComp))
+            {
+                treeComp.Position = new Vector3(36.25f, 11.0f, 25.8f);
+                treeComp.YawDegrees = 45;
+            }
+
         }
 
         if (EntityManager.TryCreateEntity("Camp_Fire", out var fire))
@@ -300,6 +305,16 @@ public sealed class WorldManager : IWorldManager
             if (fire.TryGetComponent<ClientCampFireComponent>(out var campFire))
             {
                 campFire.EnemiesTooClose = false;
+            }
+        }
+
+        // HomeTeleporter
+        if (EntityManager.TryCreateEntity("HomeTeleporter", out var teleport))
+        {
+            if (teleport.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
+            {
+                smoothedTransformComponent.Position = new Vector3(50.25f, 11.0f, 25.8f);
+                smoothedTransformComponent.YawDegrees = 90;
             }
         }
 

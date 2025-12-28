@@ -19,7 +19,7 @@ public static class EntityMoved
         if (connection.PlayerEntity.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
         {
             smoothedTransformComponent.Position = new Vector3(positionX, positionY, positionZ);
-            //smoothedTransformComponent.Yaw = yaw;
+            smoothedTransformComponent.YawDegrees = yaw;
         }
 
         return true;
