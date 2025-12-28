@@ -25,4 +25,7 @@ public abstract class Component
     }
 
     public abstract bool TrySync(string parameterName, BitStream bitStream);
+
+    public virtual void Tick()
+    { }
 }

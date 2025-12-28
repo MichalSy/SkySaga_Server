@@ -125,8 +125,16 @@ public static class BitStreamExtensions
 
     public static bool WriteInt32Reverse(this BitStream bitStream, int value)
     {
+        return WriteInt32(bitStream, value, true);
+    }
+
+    public static bool WriteInt32(this BitStream bitStream, int value, bool reverse = false)
+    {
         var tmpArray = BitConverter.GetBytes(value);
-        Array.Reverse(tmpArray, 0, 4);
+        if (reverse)
+        {
+            Array.Reverse(tmpArray, 0, 4);
+        }
         bitStream.WriteBits(tmpArray, 32, true);
         return true;
     }

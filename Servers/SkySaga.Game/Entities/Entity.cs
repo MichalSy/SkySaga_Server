@@ -29,6 +29,14 @@ public class Entity
         _sync = new BitArray(_entityData.SyncedParametersCount);
     }
 
+    public void TickComponents()
+    {
+        foreach (var component in _components.Values)
+        {
+            component.Tick();
+        }
+    }
+
     private void OnComponentParameterChanged(Component component, string parameter)
     {
         var syncIndex = _entityData.GetParameterSyncIndex(component.Name, parameter);

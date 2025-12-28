@@ -286,18 +286,22 @@ public sealed class WorldManager : IWorldManager
             }
         }
 
-        //// Sheep
-        //if (EntityManager.TryCreateEntity("Sheep", out var sheep))
-        //{
-        //    if (sheep.TryGetComponent<SmoothedTransformComponent>(out var smoothedTransformComponent))
-        //        smoothedTransformComponent.Position = new Vector3(31.25f, 1.1f, 9.8f);
+        if (EntityManager.TryCreateEntity("Christmas_Tree", out var tree))
+        {
+            if (tree.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
+                smoothedTransformComponent.Position = new Vector3(36.25f, 11.0f, 25.8f);
+        }
 
-        //    if (sheep.TryGetComponent<ClientHealthComponent>(out var clientHealthComponent))
-        //        clientHealthComponent.HalfHearts = 50;
+        if (EntityManager.TryCreateEntity("Camp_Fire", out var fire))
+        {
+            if (fire.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
+                smoothedTransformComponent.Position = new Vector3(39.25f, 11.0f, 25.8f);
 
-        //    if (sheep.TryGetComponent<ClientCharacterPhysicsComponent>(out var clientCharacterPhysicsComponent))
-        //        clientCharacterPhysicsComponent.IsMoveable = true;
-        //}
+            if (fire.TryGetComponent<ClientCampFireComponent>(out var campFire))
+            {
+                campFire.EnemiesTooClose = false;
+            }
+        }
 
         //// Bear
         //if (EntityManager.TryCreateEntity("Iron", out var bear))

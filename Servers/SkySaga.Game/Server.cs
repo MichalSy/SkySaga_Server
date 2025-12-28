@@ -45,7 +45,7 @@ public class Server : IDisposable
     {
         ProcessPackets();
 
-        ProcessMaps();
+        UpdateAndSyncEntities();
         ProcessConnections();
     }
 
@@ -106,12 +106,14 @@ public class Server : IDisposable
         _peer.DeallocatePacket(packet);
     }
 
-    private void ProcessMaps()
+    private void UpdateAndSyncEntities()
     {
         var entities = _worldManager.EntityManager.Entities;
 
         foreach (var entity in entities)
         {
+            entity.TickComponents();
+
             if (!entity.SyncRequired)
                 continue;
 
