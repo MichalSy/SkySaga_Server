@@ -90,6 +90,27 @@ public static class Util
         return (max & (uint.MaxValue - 1)) != 0 ? required - 2 : required - max;
     }
 
+    public static uint NumBitsRequiredUInt16(ushort max)
+    {
+        var required = 16u;
+        if ((max >> 8) > 0)
+        {
+            required = 8;
+            max >>= 8;
+        }
+        if ((max >> 4) > 0)
+        {
+            required -= 4;
+            max >>= 4;
+        }
+        if ((max >> 2) > 0)
+        {
+            required -= 2;
+            max >>= 2;
+        }
+        return (max & 0xFFFE) != 0 ? required - 2 : required - max;
+    }
+
     public static uint NumBitsRequiredByte(byte max)
     {
         var required = 8u;

@@ -146,6 +146,24 @@ public static class BitStreamExtensions
         return true;
     }
 
+    public static bool WriteInt16(this BitStream bitStream, ushort value, ushort? maxValue = null, bool reverse = false)
+    {
+        var tmpArray = BitConverter.GetBytes(value);
+        if (reverse)
+        {
+            Array.Reverse(tmpArray, 0, 2);
+        }
+
+        uint bitsToWrite = 16;
+        if (maxValue.HasValue)
+        {
+            bitsToWrite = bitsToWrite - Util.NumBitsRequiredUInt16(maxValue.Value);
+        }
+
+        bitStream.WriteBits(tmpArray, bitsToWrite, true);
+        return true;
+    }
+
     public static void WriteString(this BitStream bitStream, string? value)
     {
         if (string.IsNullOrEmpty(value))
