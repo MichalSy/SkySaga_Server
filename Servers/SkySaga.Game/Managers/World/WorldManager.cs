@@ -268,12 +268,12 @@ public sealed class WorldManager : IWorldManager
         {
             if (timeOfDay.TryGetComponent<ClientTimeOfDayComponent>(out var clientTimeOfDayComponent))
             {
-                clientTimeOfDayComponent.StartTimeOfDay = 32768;
-                clientTimeOfDayComponent.FixedTimeOfDay = true;
-                clientTimeOfDayComponent.DayNightCycleDuration = 20;
+                clientTimeOfDayComponent.StartTimeOfDay = 0.5f;
+                clientTimeOfDayComponent.FixedTimeOfDay = false;
+                clientTimeOfDayComponent.DayNightCycleDuration = 1;
                 clientTimeOfDayComponent.RealWorldStartTime = RakNet.RakNet.GetTime();
-                clientTimeOfDayComponent.TimeStretch = 8;
-                clientTimeOfDayComponent.TimeOfDayOffset = 65536;
+                clientTimeOfDayComponent.TimeStretch = 0;
+                clientTimeOfDayComponent.TimeOfDayOffset = 0.5f;
             }
         }
 

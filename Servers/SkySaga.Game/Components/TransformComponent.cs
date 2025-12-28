@@ -1,11 +1,13 @@
-﻿namespace SkySaga.Game.Components;
+﻿using SkySaga.Game.Extensions;
+
+namespace SkySaga.Game.Components;
 
 public class TransformComponent : Component
 {
     public Vector3 Position { get; set => SetIfChanged(ref field, value); }
     public float YawDegrees { get; set => SetIfChanged(ref field, value); } = 0;
-    public Vector3 Size { get; set => SetIfChanged(ref field, value); }
-    public float Scale { get; set => SetIfChanged(ref field, value); } = 2;
+    public Vector3Int Size { get; set => SetIfChanged(ref field, value); }
+    public float Scale { get; set => SetIfChanged(ref field, value); } = 1;
 
     public override bool TrySync(string parameterName, BitStream bitStream)
     {
@@ -25,20 +27,20 @@ public class TransformComponent : Component
             bitStream.WriteBits(BitConverter.GetBytes((int)((YawDegrees * 32f) + 12800)), 32 - Util.NumBitsRequiredUInt32(0x6400), true);
             return true;
         }
-        //else if (parameterName.Equals(nameof(Size), StringComparison.OrdinalIgnoreCase))
-        //{
-        //    bitStream.WriteBits(BitConverter.GetBytes(Size[0]), 32 - Util.NumBitsRequiredUInt32(9), true);
-        //    bitStream.WriteBits(BitConverter.GetBytes(Size[1]), 32 - Util.NumBitsRequiredUInt32(9), true);
-        //    bitStream.WriteBits(BitConverter.GetBytes(Size[2]), 32 - Util.NumBitsRequiredUInt32(9), true);
+        else if (parameterName.Equals(nameof(Size), StringComparison.OrdinalIgnoreCase))
+        {
+            bitStream.WriteInt32(Size.X, 9);
+            bitStream.WriteInt32(Size.Y, 9);
+            bitStream.WriteInt32(Size.Z, 9);
 
-            //    return true;
-            //}
-            //else if (parameterName.Equals(nameof(Scale), StringComparison.OrdinalIgnoreCase))
-            //{
-            //    bitStream.WriteBits(BitConverter.GetBytes(Scale * 8), 32 - Util.NumBitsRequiredUInt32(56), true);
+            return true;
+        }
+        else if (parameterName.Equals(nameof(Scale), StringComparison.OrdinalIgnoreCase))
+        {
+            bitStream.WriteInt32((int)(Scale * 8), 56);
 
-            //    return true;
-            //}
+            return true;
+        }
 
         return false;
     }
