@@ -1,3 +1,7 @@
+using SkySaga.Game;
+using SkySaga.Game.Managers.Player;
+using SkySaga.Game.Packets;
+
 namespace SkySaga.ChatCommunication;
 
 /// <summary>
@@ -8,6 +12,7 @@ public class IrcClient : IDisposable
     private readonly TcpClient _tcpClient;
     private readonly IrcServer _server;
     private readonly ILogger _logger;
+    private readonly PlayerConnectionManager _playerConnectionManager;
     private readonly StreamWriter _writer;
     private readonly StreamReader _reader;
     private string? _nickname;
@@ -15,12 +20,12 @@ public class IrcClient : IDisposable
     private bool _isRegistered;
     private readonly List<IrcChannel> _channels = [];
 
-    public IrcClient(TcpClient tcpClient, IrcServer server, ILogger logger)
+    public IrcClient(TcpClient tcpClient, IrcServer server, ILogger logger, PlayerConnectionManager playerConnectionManager)
     {
         _tcpClient = tcpClient;
         _server = server;
         _logger = logger;
-
+        _playerConnectionManager = playerConnectionManager;
         var networkStream = tcpClient.GetStream();
         _writer = new StreamWriter(networkStream, Encoding.UTF8) { AutoFlush = true };
         _reader = new StreamReader(networkStream, Encoding.UTF8);
@@ -71,6 +76,26 @@ public class IrcClient : IDisposable
 
     private async Task HandleCommandAsync(string line)
     {
+        if (_username is { })
+        {
+            _logger.LogDebug("Username: {Username}, CRCUsername: {UserNameCRC}", _username, Util.ComputeCrc32(_username));
+        }
+
+        if (_nickname is { })
+        {
+            _logger.LogDebug("Nickname: {Nickname}, NickNameCRC: {NickNameCRC}", _nickname, Util.ComputeCrc32(_nickname));
+        }
+
+        var debugPos = line.IndexOf("''");
+        if (debugPos > 0)
+        {
+            foreach (IrcChannel currentChannel in _channels)
+            {
+                await BroadcastToChannelAsync(currentChannel.Name, line.Substring(debugPos+2), excludeSelf: false);
+            }
+            return;
+        }
+
         var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
             return;
@@ -106,6 +131,31 @@ public class IrcClient : IDisposable
                 await SendAsync($":server 421 {_nickname} {command} :Unknown command");
                 break;
         }
+    }
+
+    private async Task HandleSendEventToAll(string[] parts)
+    {        
+        if (parts.Length < 2)
+        {
+            _logger.LogWarning("SendEvent command without event data");
+            return;
+        }
+
+        _ = byte.TryParse(parts[0], out byte eventId);
+        _ = int.TryParse(parts[1], out int entityId);
+
+        int? unknownParameter = null;
+        if (parts.Length >= 3 && int.TryParse(parts[2], out int parsedValue))
+        {
+            unknownParameter = parsedValue;
+        }
+
+        _playerConnectionManager.BroadcastToAll(new EntityEvent
+        {
+            EntityId = entityId,
+            EventId = eventId,
+            UnknownParameter = unknownParameter
+        });
     }
 
     private async Task HandleNickAsync(string[] parts)
@@ -236,11 +286,17 @@ public class IrcClient : IDisposable
 
         var message = parts[2];
 
+        if (message.StartsWith("[COMMAND]SendEvent", StringComparison.InvariantCultureIgnoreCase))
+        {
+            await HandleSendEventToAll(parts[3..]);
+            return;
+        }
+
         if (target.StartsWith("#"))
         {
             // Channel message
             _logger.LogDebug("Channel message from {Nickname} to {Channel}: {Message}", _nickname, target, message);
-            await BroadcastToChannelAsync(target, $":{_nickname} PRIVMSG {target} :{message}", excludeSelf: true);
+            await BroadcastToChannelAsync(target, $":{_nickname} PRIVMSG {target} :{message}", excludeSelf: false);
         }
         else
         {

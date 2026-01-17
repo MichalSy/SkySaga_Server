@@ -2,6 +2,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 global using RakNet;
+global using SkySaga.ChatCommunication;
 global using SkySaga.Game;
 global using SkySaga.Game.Components;
 global using SkySaga.Game.Data;

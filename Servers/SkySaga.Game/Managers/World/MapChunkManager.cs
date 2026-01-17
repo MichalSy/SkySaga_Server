@@ -116,7 +116,7 @@ public class MapChunkManager(PlayerConnectionManager playerConnectionManager, IW
         //var metaData = chunk.GetMetadataForNetwork();
         // Create ChunkSync packet: 1 byte header + voxel data
         var syncData = new byte[dataSize + 1];
-        var syncMeta = new byte[dataSize + 1];
+        var syncMeta = new byte[dataSize + 9];
 
         
 
@@ -124,16 +124,53 @@ public class MapChunkManager(PlayerConnectionManager playerConnectionManager, IW
         for (int i = 0; i < dataSize; i++)
         {
             syncData[1 + i] = (voxelData[i] == 0) ? (byte)255 : voxelData[i];
+            syncMeta[1 + i] = 3;
         }
+        
 
-        //metaData.CopyTo(syncMeta, 1);
-        Array.Fill<byte>(syncMeta, 0x00);
+        ////metaData.CopyTo(syncMeta, 1);
+        //if (chunkPosition.X == 1 && chunkPosition.Y == 0 && chunkPosition.Z == 1)
+        //{
+        //    Array.Fill<byte>(syncMeta, 0);
+
+        //    syncMeta[0] = 3; // Full chunk sync header
+
+
+        //    //for (int i = 3; i < 100; i++)
+        //    //{
+        //    //    syncMeta[i] = (byte)((i % 8) + 1);
+        //    //}
+
+        //    syncMeta[16] = 3;
+        //    syncMeta[17] = 4;
+        //    syncMeta[18] = 5;
+        //    syncMeta[19] = 6;
+
+
+        //    syncMeta[70] = 4;
+        //    syncMeta[71] = 5;
+        //    syncMeta[72] = 6;
+        //    syncMeta[73] = 7;
+        //    syncMeta[74] = 8;
+
+        //    //syncMeta[24] = 24;
+        //    //syncMeta[25] = 25;
+        //    //syncMeta[28] = 28;
+        //    //syncMeta[29] = 29;
+
+
+        //    //var valu = Util.ComputeCrc32("Iron_Deposit");
+        //    //var bytes = BitConverter.GetBytes(valu);
+        //    ////Array.Reverse(bytes, 0, 4);
+        //    //bytes.CopyTo(syncMeta, 76);
+        //}
+
+
 
         return new ChunkSync
         {
             Coords = new Vector3Int(chunkPosition.X, chunkPosition.Y, chunkPosition.Z),
             Data1 = syncData,
-            //Data2 = new byte[dataSize+1],
         };
     }
 

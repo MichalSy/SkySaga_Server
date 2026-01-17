@@ -123,6 +123,24 @@ public static class BitStreamExtensions
         return true;
     }
 
+    public static bool WriteUInt32(this BitStream bitStream, uint value, uint? maxValue = null, bool reverse = false)
+    {
+        var tmpArray = BitConverter.GetBytes(value);
+        if (reverse)
+        {
+            Array.Reverse(tmpArray, 0, 4);
+        }
+
+        uint bitsToWrite = 32;
+        if (maxValue.HasValue)
+        {
+            bitsToWrite = bitsToWrite - Util.NumBitsRequiredUInt32(maxValue.Value);
+        }
+
+        bitStream.WriteBits(tmpArray, bitsToWrite, true);
+        return true;
+    }
+
     public static bool WriteInt32Reverse(this BitStream bitStream, int value)
     {
         return WriteInt32(bitStream, value, null, true);
@@ -158,6 +176,24 @@ public static class BitStreamExtensions
         if (maxValue.HasValue)
         {
             bitsToWrite = bitsToWrite - Util.NumBitsRequiredUInt16(maxValue.Value);
+        }
+
+        bitStream.WriteBits(tmpArray, bitsToWrite, true);
+        return true;
+    }
+
+    public static bool WriteByte(this BitStream bitStream, byte value, byte? maxValue = null, bool reverse = false)
+    {
+        byte[] tmpArray = [value];
+        if (reverse)
+        {
+            Array.Reverse(tmpArray, 0, 2);
+        }
+
+        uint bitsToWrite = 8;
+        if (maxValue.HasValue)
+        {
+            bitsToWrite = bitsToWrite - Util.NumBitsRequiredByte(maxValue.Value);
         }
 
         bitStream.WriteBits(tmpArray, bitsToWrite, true);

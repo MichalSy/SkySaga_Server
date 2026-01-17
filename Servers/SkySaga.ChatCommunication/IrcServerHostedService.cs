@@ -1,4 +1,6 @@
-namespace SkySaga.Game;
+﻿using Microsoft.Extensions.Hosting;
+
+namespace SkySaga.ChatCommunication;
 
 public class IrcServerHostedService(
     IrcServer ircServer,

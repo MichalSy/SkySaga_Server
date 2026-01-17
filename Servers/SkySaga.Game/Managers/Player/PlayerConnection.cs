@@ -30,6 +30,7 @@ public class PlayerConnection
         _worldManager.EntityManager.TryCreateEntity("Player", out var player);
 
         ArgumentNullException.ThrowIfNull(player);
+        Debug.WriteLine("Created player entity with ID: " + player.Id);
 
         PlayerEntity = player;
     }

@@ -43,7 +43,7 @@ public static class PersistentRecordEndpoints
                         new
                         {
                             uuid = _characterUUID,
-                            name = "Player",
+                            name = $"Player{AuthenticationEndpoints.PlayerCounter}",
                             homeBiome = "Sky", // (string?)null, // null > character creation
                             positionInList = 0
                         }

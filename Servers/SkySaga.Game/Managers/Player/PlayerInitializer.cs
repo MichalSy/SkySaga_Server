@@ -16,7 +16,7 @@ public class PlayerInitializer(IMapEntityManager entityManager)
 
         // TODO: Component property defaults and database
         if (player.TryGetComponent<ClientPlayernameComponent>(out var clientPlayernameComponent))
-            clientPlayernameComponent.Playername = $"Player {player.Id}";
+            clientPlayernameComponent.Playername = $"Player{player.Id}";
 
         if (player.TryGetComponent<ClientHealthComponent>(out var clientHealthComponent))
         {

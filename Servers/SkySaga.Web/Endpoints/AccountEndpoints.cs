@@ -12,7 +12,7 @@ public static class AccountEndpoints
             {
                 keySubset = new
                 {
-                    RESERVED_NAME = "Player"
+                    RESERVED_NAME = $"Player{AuthenticationEndpoints.PlayerCounter}"
                 }
             }
         });

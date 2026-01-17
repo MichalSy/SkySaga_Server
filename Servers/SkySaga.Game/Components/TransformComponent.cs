@@ -24,7 +24,7 @@ public class TransformComponent : Component
             if (YawDegrees == 0)
                 return false;
 
-            bitStream.WriteBits(BitConverter.GetBytes((int)((YawDegrees * 32f) + 12800)), 32 - Util.NumBitsRequiredUInt32(0x6400), true);
+            bitStream.WriteBits(BitConverter.GetBytes((int)((YawDegrees * 32f) + 12800)), 32 - Util.NumBitsRequiredUInt32(25600), true);
             return true;
         }
         else if (parameterName.Equals(nameof(Size), StringComparison.OrdinalIgnoreCase))

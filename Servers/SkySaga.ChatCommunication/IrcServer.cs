@@ -1,12 +1,15 @@
+using SkySaga.Game.Managers.Player;
+
 namespace SkySaga.ChatCommunication;
 
 /// <summary>
 /// Simple IRC server implementation.
 /// </summary>
-public class IrcServer(ILogger<IrcServer> logger) : IDisposable
+public class IrcServer(ILogger<IrcServer> logger, PlayerConnectionManager playerConnectionManager) : IDisposable
 {
     private readonly int _port = 444;
     private readonly ILogger<IrcServer> _logger = logger;
+    private readonly PlayerConnectionManager _playerConnectionManager = playerConnectionManager;
     private TcpListener? _listener;
     private readonly Dictionary<string, IrcClient> _clients = [];
     private readonly Dictionary<string, IrcChannel> _channels = [];
@@ -71,7 +74,7 @@ public class IrcServer(ILogger<IrcServer> logger) : IDisposable
 
     private async Task HandleClientAsync(TcpClient tcpClient, CancellationToken cancellationToken)
     {
-        var client = new IrcClient(tcpClient, this, _logger);
+        var client = new IrcClient(tcpClient, this, _logger, _playerConnectionManager);
         await client.ProcessAsync(cancellationToken);
     }
 

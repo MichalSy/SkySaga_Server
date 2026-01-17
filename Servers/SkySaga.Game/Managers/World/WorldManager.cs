@@ -43,7 +43,7 @@ public sealed class WorldManager : IWorldManager
 
         // Try to load existing world from database
         var existingWorld = await _worldRepository.GetWorldByNameAsync(worldName);
-
+        existingWorld = null;
         if (existingWorld != null)
         {
             // Load from database
@@ -54,6 +54,9 @@ public sealed class WorldManager : IWorldManager
 
             // Load all chunks from database
             await LoadChunksFromDatabaseAsync();
+
+            // Initialize world entities (not persisted)
+            GenerateWorldEntities();
         }
         else
         {
@@ -82,9 +85,6 @@ public sealed class WorldManager : IWorldManager
 
             _logger?.LogInformation("New world '{WorldName}' created with ID: {WorldId}", worldName, WorldId);
         }
-
-        // Initialize world entities (not persisted)
-        GenerateWorldEntities();
     }
 
     /// <summary>
@@ -206,6 +206,12 @@ public sealed class WorldManager : IWorldManager
                     chunk.SetVoxel(x, 10, z, 1);
                 }
             }
+
+            //chunk.SetVoxel(4, 11, 22, 39);
+
+            chunk.SetVoxel(5, 11, 26, 19);
+            chunk.SetVoxel(5, 12, 26, 19);
+            chunk.SetVoxel(5, 13, 26, 19);
         }
 
         // Chunk (1, 0, 1) - Grass field with decorations
@@ -224,7 +230,7 @@ public sealed class WorldManager : IWorldManager
             // Decorative blocks - block type 20
             for (int i = 0; i < 14; i += 2)
             {
-                chunk.SetVoxel(4 + i, 11, 14, 20);
+                chunk.SetVoxel(4 + i, 12, 1, 253);
             }
         }
 
@@ -248,22 +254,37 @@ public sealed class WorldManager : IWorldManager
         GenerateWorldEntities();
     }
 
+    private void CreateAndEquipInventoryItem(ClientInventoryComponent inventory, int slot, string itemName, int count = 1)
+    {
+        if (EntityManager.TryCreateEntity("BasicInventoryItem", out var item))
+        {
+            if (item.TryGetComponent<InventoryItemComponent>(out var inventoryItemComponent))
+            {
+                inventoryItemComponent.InventorySlotData.Name = Util.ComputeCrc32(itemName);
+                inventoryItemComponent.InventorySlotData.Count = count;
+                inventoryItemComponent.InventorySlotData.ItemUUID = Util.NewGuid();
+            }
+
+            inventory.InventoryEntityList[slot] = item.Id;
+        }
+    }
+
     /// <summary>
     /// Initializes world entities like NPCs, animals, and environmental objects.
     /// </summary>
     private void GenerateWorldEntities()
     {
         // AirShip
-        if (EntityManager.TryCreateEntity("AirShip", out var airShip))
-        {
-            if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
-            {
-                transformComponent.Position = new Vector3(31.25f, 11f, 19.8f);
-                transformComponent.YawDegrees = 45;
-            }
-        }
+        //if (EntityManager.TryCreateEntity("AirShip", out var airShip))
+        //{
+        //    if (airShip.TryGetComponent<TransformComponent>(out var transformComponent))
+        //    {
+        //        transformComponent.Position = new Vector3(31.25f, 11f, 19.8f);
+        //        transformComponent.YawDegrees = 45;
+        //    }
+        //}
 
-        // TimeOfDay
+        //TimeOfDay
         if (EntityManager.TryCreateEntity("TimeOfDay", out var timeOfDay))
         {
             if (timeOfDay.TryGetComponent<ClientTimeOfDayComponent>(out var clientTimeOfDayComponent))
@@ -278,45 +299,166 @@ public sealed class WorldManager : IWorldManager
         }
 
         // SeaLevel
-        if (EntityManager.TryCreateEntity("SeaLevel", out var sea))
+        if (EntityManager.TryCreateEntity("Chest", out var chest))
         {
-            if (sea.TryGetComponent<SeaLevelComponent>(out var seaLevelComponent))
+            Debug.WriteLine("Created Chest entity with ID: " + chest.Id);
+            if (chest.TryGetComponent<TransformComponent>(out var transform))
             {
-                seaLevelComponent.SeaFloorLevel = 0;
-                seaLevelComponent.SeaLevel = 1;
+                transform.Position = new Vector3(31.25f, 11f, 19.8f);
+                transform.YawDegrees = 90;
+                //transform.Size = new Vector3Int(1, 2, 1);
+            }
+
+            if (chest.TryGetComponent<ClientInteractionComponent>(out var interaction))
+            {
+                interaction.IsLootChest = true;
+                interaction.Enabled = true;
+            }
+
+            if (chest.TryGetComponent<ClientInventoryComponent>(out var clientInventoryComponent))
+            {
+                clientInventoryComponent.MaxInventorySlots = 10;
+
+                for (int i = 0; i < clientInventoryComponent.MaxInventorySlots; i++)
+                    clientInventoryComponent.InventoryEntityList.Add(0);
+
+                // Armor pieces
+                //CreateAndEquipInventoryItem(clientInventoryComponent, 2, "ExplorerArmourHead");
+                //CreateAndEquipInventoryItem(clientInventoryComponent, 3, "ExplorerArmourTorso");
+                //CreateAndEquipInventoryItem(clientInventoryComponent, 4, "ExplorerArmourArms");
+                //CreateAndEquipInventoryItem(clientInventoryComponent, 5, "ExplorerArmourLegs");
+
+                // Inventory items
+                CreateAndEquipInventoryItem(clientInventoryComponent, 1, "Dirt", 10);
+
+                //
             }
         }
 
-        if (EntityManager.TryCreateEntity("Christmas_Tree", out var tree))
+        //// SeaLevel
+        //if (EntityManager.TryCreateEntity("SeaLevel", out var sea))
+        //{
+        //    if (sea.TryGetComponent<SeaLevelComponent>(out var seaLevelComponent))
+        //    {
+        //        seaLevelComponent.SeaFloorLevel = 0;
+        //        seaLevelComponent.SeaLevel = 1;
+        //    }
+        //}
+
+        //if (EntityManager.TryCreateEntity("Tree", out var tree))
+        //{
+        //    if (tree.TryGetComponent<ClientTreeComponent>(out var comp))
+        //    {
+        //        comp.TreeType = 1;
+
+        //        var descList = new List<TreeDescriptionItemDTO>();
+
+
+        //        descList.Add(new TreeDescriptionItemDTO
+        //        {
+        //            HasDestoryEffect = 1,
+        //            OffsetDirection = TreeDescriptionPositionOffset.Up,
+        //            NextNodeIndex = (byte)2,
+        //            DestroyOnAnyDamage = true,
+        //            VoxelIndex = 19
+        //        });
+
+        //        descList.Add(new TreeDescriptionItemDTO
+        //        {
+        //            HasDestoryEffect = 1,
+        //            OffsetDirection = TreeDescriptionPositionOffset.Up,
+        //            NextNodeIndex = (byte)3,
+        //            DestroyOnAnyDamage = true,
+        //            VoxelIndex = 19
+        //        });
+
+        //        descList.Add(new TreeDescriptionItemDTO
+        //        {
+        //            HasDestoryEffect = 1,
+        //            OffsetDirection = TreeDescriptionPositionOffset.Up,
+        //            NextNodeIndex = 0,
+        //            DestroyOnAnyDamage = true,
+        //            VoxelIndex = 19
+        //        });
+
+        //        comp.Description = descList;
+        //        //comp.Description = 411863920u;
+        //        //comp.PartsDestroyed = [
+        //        //    0, 0, 0, 0, 
+        //        //    0, 0, 0, 0, 
+        //        //    0, 0, 0, 0,
+        //        //    0, 0, 0];
+        //    }
+
+        //    if (tree.TryGetComponent<TransformComponent>(out var treeComp))
+        //    {
+        //        treeComp.Position = new Vector3(36.5f, 11f, 25.5f);
+        //    }
+        //}
+
+        if (EntityManager.TryCreateEntity("Barrel_A", out var barrel))
         {
-            if (tree.TryGetComponent<TransformComponent>(out var treeComp))
+            if (barrel.TryGetComponent<TransformComponent>(out var transform))
             {
-                treeComp.Position = new Vector3(36.25f, 11.0f, 25.8f);
-                treeComp.YawDegrees = 45;
+                transform.Position = new Vector3(36.5f, 11.0f, 22.5f);
+                transform.YawDegrees = 45;
+            }
+
+            if (barrel.TryGetComponent<ClientHealthComponent>(out var health))
+            {
+                health.InitialHP = 10;
+                health.DebrisType = 15;
+            }
+
+            if (barrel.TryGetComponent<ClientVoxelLinkComponent>(out var link))
+            {
+                link.CanReplaceVoxelsOfEntityID = 39;
+                link.Voxels = [
+                    new VoxelLinkItemDTO
+                    {
+                        VoxelCoord = new Vector3Int(0, 0, 0),
+                        VoxelId = 39
+                    }
+                ];
             }
 
         }
 
-        if (EntityManager.TryCreateEntity("Camp_Fire", out var fire))
-        {
-            if (fire.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
-                smoothedTransformComponent.Position = new Vector3(39.25f, 11.0f, 25.8f);
+        //if (EntityManager.TryCreateEntity("Chest", out var chest))
+        //{
+        //    if (chest.TryGetComponent<TransformComponent>(out var treeComp))
+        //    {
+        //        treeComp.Position = new Vector3(36.25f, 11.0f, 22.8f);
+        //        treeComp.YawDegrees = 45;
+        //    }
 
-            if (fire.TryGetComponent<ClientCampFireComponent>(out var campFire))
-            {
-                campFire.EnemiesTooClose = false;
-            }
-        }
+        //    //if (chest.TryGetComponent<ClientInteractionComponent>(out var inter))
+        //    //{
+        //    //    inter.IsLootChest = true;
+        //    //}
 
-        // HomeTeleporter
-        if (EntityManager.TryCreateEntity("HomeTeleporter", out var teleport))
-        {
-            if (teleport.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
-            {
-                smoothedTransformComponent.Position = new Vector3(50.25f, 11.0f, 25.8f);
-                smoothedTransformComponent.YawDegrees = 90;
-            }
-        }
+        //}
+
+        //if (EntityManager.TryCreateEntity("Camp_Fire", out var fire))
+        //{
+        //    if (fire.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
+        //        smoothedTransformComponent.Position = new Vector3(39.25f, 11.0f, 25.8f);
+
+        //    if (fire.TryGetComponent<ClientCampFireComponent>(out var campFire))
+        //    {
+        //        campFire.EnemiesTooClose = false;
+        //    }
+        //}
+
+        //// HomeTeleporter
+        //if (EntityManager.TryCreateEntity("HomeTeleporter", out var teleport))
+        //{
+        //    if (teleport.TryGetComponent<TransformComponent>(out var smoothedTransformComponent))
+        //    {
+        //        smoothedTransformComponent.Position = new Vector3(50.25f, 11.0f, 25.8f);
+        //        smoothedTransformComponent.YawDegrees = 90;
+        //    }
+        //}
 
         //// Bear
         //if (EntityManager.TryCreateEntity("Iron", out var bear))
@@ -386,7 +528,7 @@ public sealed class WorldManager : IWorldManager
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(playerInitializer);
 
-        // Initialize the player with default components and inventory
+        //Initialize the player with default components and inventory
         playerInitializer.InitializePlayer(player);
 
         // Send all entities to the client

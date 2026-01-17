@@ -36,7 +36,7 @@ public class EntityManager : IMapEntityManager
 
     private static void LoadEntityTemplates()
     {
-        using var fileStream = File.OpenRead(@"Data\Entities.json");
+        using var fileStream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, @"Data\Entities.json"));
 
         using var jsonDocument = JsonDocument.Parse(fileStream);
 
